@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171b38">
+<meta name="description" content="A private personal productivity dashboard for tasks, calendar, journal, goals and habits.">
+<link rel="manifest" href="manifest.webmanifest">
+<title>My Life Dashboard</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#718096;--line:#e7eaf0;--accent:#5b5ce2;--soft:#eef0ff;--danger:#d14343;--shadow:0 8px 24px rgba(23,32,51,.06)}
+:root.dark{--bg:#10131c;--card:#181d29;--text:#f3f5fa;--muted:#a7afbf;--line:#2b3342;--soft:#25294a;--shadow:0 8px 24px rgba(0,0,0,.2)}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.app{max-width:1100px;margin:auto;padding-bottom:95px}
+header{padding:18px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);z-index:4}
+.brand{font-size:20px;font-weight:850}.muted{color:var(--muted);font-size:13px}.btn{padding:10px 13px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--text);box-shadow:none}.primary{background:var(--accent);color:#fff;border:0;font-weight:750}.danger{color:var(--danger)}
+main{padding:0 16px}.hero{padding:22px;border-radius:22px;background:#171b38;color:#fff;margin-bottom:15px;box-shadow:var(--shadow)}.hero h1{margin:0 0 5px}.hero p{color:#d9dcff}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:16px;box-shadow:var(--shadow)}.s4{grid-column:span 4}.s6{grid-column:span 6}.s8{grid-column:span 8}.s12{grid-column:span 12}.card h2{font-size:15px;margin:0 0 13px}
+.stat{font-size:28px;font-weight:850}.progress{height:8px;background:var(--line);border-radius:9px;margin-top:9px;overflow:hidden}.progress i{display:block;height:100%;background:var(--accent)}
+.task{display:flex;gap:9px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.task:last-child{border:0}.task.done span{text-decoration:line-through;color:var(--muted)}.task small{color:var(--muted)}.pill{background:var(--soft);color:var(--accent);padding:3px 7px;border-radius:99px;font-size:10px;font-weight:750}
+input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text)}.form{display:grid;gap:10px}.form label{font-size:12px;font-weight:750;color:var(--muted)}
+.section{display:none}.section.active{display:block}.toolbar{display:flex;gap:8px;margin-bottom:12px}.toolbar input{flex:1}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.calhead{text-align:center;font-size:11px;color:var(--muted)}.day{min-height:66px;border:1px solid var(--line);border-radius:9px;padding:6px;font-size:12px;background:var(--bg)}.today{outline:2px solid var(--accent);background:var(--soft)}.event{font-size:9px;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);z-index:5;padding-bottom:env(safe-area-inset-bottom)}.nav button{border:0;background:none;padding:9px 4px;color:var(--muted)}.nav .active{color:var(--accent);font-weight:800}.nav strong{display:block;font-size:17px}
+.modal{position:fixed;inset:0;background:#0008;display:none;align-items:flex-end;z-index:10}.modal.show{display:flex}.sheet{background:var(--card);width:100%;max-width:600px;margin:auto;border-radius:22px 22px 0 0;padding:20px;max-height:90vh;overflow:auto}
+.empty{text-align:center;padding:20px;color:var(--muted)}.row{display:flex;gap:8px;align-items:center}.between{justify-content:space-between}.item-actions{margin-left:auto;display:flex;gap:5px}.mini{padding:7px 9px;font-size:12px}
+.install-banner{display:none;margin:0 16px 14px;padding:12px 14px;border:1px solid var(--line);border-radius:15px;background:var(--card);box-shadow:var(--shadow)}.install-banner.show{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.notice{padding:10px 12px;border-radius:11px;background:var(--soft);font-size:12px;margin-bottom:10px}
+@media(max-width:700px){.s4,.s6,.s8{grid-column:span 12}.toolbar{flex-direction:column}.header-actions .optional{display:none}.calendar .day{min-height:58px}.brand{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div><div class="brand">✨ My Life Dashboard</div><div class="muted" id="date"></div></div>
+  <div class="actions header-actions"><button class="btn optional" onclick="toggleTheme()" id="themeBtn">🌙</button><button class="btn primary" onclick="modal('quick')">＋ Quick Add</button></div>
+</header>
+<div id="installBanner" class="install-banner"><span>📱 Install My Life Dashboard on your phone for an app-like experience.</span><button class="btn primary" onclick="installApp()">Install</button></div>
+<main>
+<section id="home" class="section active">
+  <div class="hero"><h1 id="greeting"></h1><p>Focus on progress, not perfection.</p><div class="actions"><button class="btn primary" onclick="modal('task')">＋ Task</button><button class="btn" onclick="modal('journal')">📓 Journal</button></div></div>
+  <div class="grid">
+    <div class="card s4"><h2>Today's Tasks</h2><div class="stat" id="taskstat">0/0</div><div class="muted">completed today</div><div class="progress"><i id="taskbar"></i></div></div>
+    <div class="card s4"><h2>Journal Streak</h2><div class="stat" id="streak">0 days</div><div class="muted">consecutive days</div></div>
+    <div class="card s4"><h2>Goals</h2><div class="stat" id="goalstat">0%</div><div class="muted">overall progress</div><div class="progress"><i id="goalbar"></i></div></div>
+    <div class="card s8"><div class="row between"><h2>Priority Tasks</h2><button class="btn mini" onclick="show('tasks')">View all</button></div><div id="priority"></div></div>
+    <div class="card s4"><h2>Upcoming</h2><div id="upcoming"></div></div>
+    <div class="card s6"><h2>Today's Journal</h2><textarea id="todayjournal" rows="7" placeholder="Write a thought, win, challenge, or gratitude..."></textarea><div class="row between" style="margin-top:8px"><span class="muted">Saved on this device</span><button class="btn primary" onclick="saveJournal()">Save</button></div></div>
+    <div class="card s6"><h2>Weekly Review</h2><div id="review"></div></div>
+  </div>
+</section>
+
+<section id="calendar" class="section"><div class="card"><div class="row between"><h2>📅 Calendar</h2><div class="actions"><button class="btn" onclick="changeMonth(-1)">‹</button><button class="btn" onclick="changeMonth(1)">›</button><button class="btn primary" onclick="modal('event')">＋ Event</button></div></div><div class="muted" id="month"></div><div class="calendar" id="cal" style="margin-top:12px"></div></div></section>
+
+<section id="tasks" class="section"><div class="card"><div class="row between"><h2>✅ Tasks & To-Do</h2><button class="btn primary" onclick="modal('task')">＋ Task</button></div><div class="toolbar"><input id="search" placeholder="Search tasks..." oninput="renderTasks()"><select id="filter" onchange="renderTasks()"><option value="all">All</option><option value="open">Open</option><option value="done">Completed</option><option value="high">High priority</option></select></div><div id="taskslist"></div></div></section>
+
+<section id="journal" class="section"><div class="card"><div class="row between"><h2>📓 Online Journal</h2><button class="btn primary" onclick="modal('journal')">＋ Entry</button></div><div id="journals"></div></div></section>
+
+<section id="more" class="section"><div class="grid">
+  <div class="card s6"><h2>🎯 Goals</h2><div id="goals"></div><button class="btn primary" onclick="modal('goal')">＋ Goal</button></div>
+  <div class="card s6"><h2>🔥 Habits</h2><div id="habits"></div><button class="btn primary" onclick="modal('habit')">＋ Habit</button></div>
+  <div class="card s6"><h2>📝 Notes</h2><div id="notes"></div><button class="btn primary" onclick="modal('note')">＋ Note</button></div>
+  <div class="card s6"><h2>📊 Productivity</h2><div id="stats"></div></div>
+  <div class="card s12"><h2>⚙️ Settings & Backup</h2><div class="notice">Your data is stored locally in this browser. Use Export regularly so you have a backup before changing phones or clearing browser data.</div><div class="actions"><button class="btn" onclick="exportData()">⬇ Export backup</button><button class="btn" onclick="document.getElementById('importFile').click()">⬆ Import backup</button><button class="btn" onclick="requestNotifications()">🔔 Enable reminders</button><button class="btn danger" onclick="resetData()">Reset all data</button><input id="importFile" type="file" accept="application/json" hidden onchange="importData(event)"></div></div>
+</div></section>
+</main></div>
+
+<nav class="nav"><button class="active" onclick="show('home',this)"><strong>⌂</strong>Home</button><button onclick="show('calendar',this)"><strong>□</strong>Calendar</button><button onclick="show('tasks',this)"><strong>✓</strong>Tasks</button><button onclick="show('journal',this)"><strong>✎</strong>Journal</button><button onclick="show('more',this)"><strong>☰</strong>More</button></nav>
+
+<div class="modal" id="modalbox"><div class="sheet"><div class="row between"><h2 id="mtitle"></h2><button class="btn" onclick="closeModal()">✕</button></div><div id="mbody"></div></div></div>
+
+<script>
+const K='life-dashboard-v2',T=()=>new Date().toISOString().slice(0,10),U=()=>Math.random().toString(36).slice(2)+Date.now();
+let d=JSON.parse(localStorage.getItem(K)||'null')||{tasks:[],journals:[],events:[],goals:[],habits:[],notes:[]};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+const fmt=x=>new Date(x+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+function persist(){localStorage.setItem(K,JSON.stringify(d));render()}
+function show(id,btn){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');render()}
+function closeModal(){document.getElementById('modalbox').classList.remove('show')}
+function modal(type){
+ let b=document.getElementById('mbody'),t=document.getElementById('mtitle');document.getElementById('modalbox').classList.add('show');
+ if(type==='quick'){t.textContent='Quick Add';b.innerHTML='<div class="grid"><button class="btn s6" onclick="modal(\\'task\\')">✅ Task</button><button class="btn s6" onclick="modal(\\'journal\\')">📓 Journal</button><button class="btn s6" onclick="modal(\\'event\\')">📅 Event</button><button class="btn s6" onclick="modal(\\'note\\')">📝 Note</button></div>';return}
+ t.textContent={task:'New Task',journal:'Journal Entry',event:'Calendar Event',goal:'New Goal',habit:'New Habit',note:'New Note'}[type];
+ let forms={
+ task:'<form class="form" onsubmit="addTask(event)"><label>Task<input id="ft" required placeholder="Finish project"></label><label>Due date<input id="fd" type="date" value="'+T()+'"></label><label>Priority<select id="fp"><option>High</option><option selected>Medium</option><option>Low</option></select></label><label>Category<select id="fc"><option>Work</option><option>Personal</option><option>Projects</option><option>Finance</option><option>Other</option></select></label><label>Repeat<select id="fr"><option value="none">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label><button class="btn primary">Add Task</button></form>',
+ journal:'<form class="form" onsubmit="addJournal(event)"><label>Date<input id="jd" type="date" value="'+T()+'"></label><label>Mood<select id="jm"><option>😊 Great</option><option>🙂 Good</option><option>😐 Okay</option><option>😔 Low</option></select></label><label>Entry<textarea id="jx" rows="9" required placeholder="How was your day? What did you learn?"></textarea></label><button class="btn primary">Save Entry</button></form>',
+ event:'<form class="form" onsubmit="addEvent(event)"><label>Event<input id="et" required placeholder="Team meeting"></label><label>Date<input id="ed" type="date" value="'+T()+'"></label><label>Time<input id="ei" type="time" value="09:00"></label><button class="btn primary">Add Event</button></form>',
+ goal:'<form class="form" onsubmit="addGoal(event)"><label>Goal<input id="gt" required placeholder="Build my portfolio"></label><label>Progress %<input id="gp" type="number" min="0" max="100" value="0"></label><button class="btn primary">Add Goal</button></form>',
+ habit:'<form class="form" onsubmit="addHabit(event)"><label>Habit<input id="ht" required placeholder="Journal every day"></label><button class="btn primary">Add Habit</button></form>',
+ note:'<form class="form" onsubmit="addNote(event)"><label>Title<input id="nt" required></label><label>Note<textarea id="nx" rows="7" required></textarea></label><button class="btn primary">Save Note</button></form>'};
+ b.innerHTML=forms[type]
+}
+function addTask(e){e.preventDefault();d.tasks.unshift({id:U(),title:ft.value,date:fd.value,priority:fp.value,cat:fc.value,repeat:fr.value,done:false});closeModal();persist()}
+function addJournal(e){e.preventDefault();d.journals.unshift({id:U(),date:jd.value,mood:jm.value,text:jx.value});closeModal();persist()}
+function addEvent(e){e.preventDefault();d.events.push({id:U(),title:et.value,date:ed.value,time:ei.value});closeModal();persist()}
+function addGoal(e){e.preventDefault();d.goals.push({id:U(),title:gt.value,progress:+gp.value});closeModal();persist()}
+function addHabit(e){e.preventDefault();d.habits.push({id:U(),title:ht.value,checks:{}});closeModal();persist()}
+function addNote(e){e.preventDefault();d.notes.unshift({id:U(),title:nt.value,text:nx.value,date:T()});closeModal();persist()}
+function toggle(id){let x=d.tasks.find(x=>x.id===id);x.done=!x.done;persist()}
+function del(a,id){d[a]=d[a].filter(x=>x.id!==id);persist()}
+function taskHTML(x){return '<div class="task '+(x.done?'done':'')+'"><input type="checkbox" '+(x.done?'checked':'')+' onchange="toggle(\\''+x.id+'\\')"><span>'+esc(x.title)+' <small class="pill">'+esc(x.priority)+'</small><br><small>'+esc(x.cat)+' · '+fmt(x.date)+(x.repeat&&x.repeat!=='none'?' · ↻ '+esc(x.repeat):'')+'</small></span><div class="item-actions"><button class="btn mini" onclick="del(\\'tasks\\',\\''+x.id+'\\')">✕</button></div></div>'}
+function renderTasks(){let q=(document.getElementById('search')?.value||'').toLowerCase(),f=document.getElementById('filter')?.value||'all';let a=d.tasks.filter(x=>(x.title+' '+x.cat).toLowerCase().includes(q)).filter(x=>f==='all'||f==='open'&&!x.done||f==='done'&&x.done||f==='high'&&x.priority==='High');taskslist.innerHTML=a.length?a.map(taskHTML).join(''):'<div class="empty">No matching tasks.</div>'}
+function streak(){let n=0,x=new Date();while(d.journals.some(j=>j.date===x.toISOString().slice(0,10))){n++;x.setDate(x.getDate()-1)}return n}
+function saveJournal(){let x=todayjournal.value.trim(),i=d.journals.findIndex(j=>j.date===T());if(i>=0)d.journals[i].text=x;else if(x)d.journals.unshift({id:U(),date:T(),mood:'🙂 Good',text:x});persist()}
+let cm=new Date();
+function changeMonth(n){cm.setMonth(cm.getMonth()+n);calendar()}
+function calendar(){let y=cm.getFullYear(),m=cm.getMonth(),first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate();month.textContent=new Date(y,m,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});let h=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>'<div class="calhead">'+x+'</div>').join(''),cells='';for(let i=0;i<first;i++)cells+='<div></div>';for(let n=1;n<=days;n++){let ds=new Date(y,m,n).toISOString().slice(0,10),ev=d.events.filter(e=>e.date===ds),cl=ds===T()?'day today':'day';cells+='<div class="'+cl+'"><b>'+n+'</b>'+ev.map(e=>'<div class="event">• '+esc(e.time)+' '+esc(e.title)+'</div>').join('')+'</div>'}cal.innerHTML=h+cells}
+function render(){
+ let now=new Date(),hr=now.getHours();greeting.textContent=(hr<12?'Good morning':hr<18?'Good afternoon':'Good evening')+' 👋';date.textContent=now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+ let td=d.tasks.filter(x=>x.date===T()),done=td.filter(x=>x.done).length;taskstat.textContent=done+'/'+td.length;taskbar.style.width=(td.length?done/td.length*100:0)+'%';streakEl=document.getElementById('streak');streakEl.textContent=streak()+' days';
+ let gp=d.goals.length?Math.round(d.goals.reduce((a,x)=>a+x.progress,0)/d.goals.length):0;goalstat.textContent=gp+'%';goalbar.style.width=gp+'%';
+ priority.innerHTML=d.tasks.filter(x=>!x.done).sort((a,b)=>({High:0,Medium:1,Low:2}[a.priority]-({High:0,Medium:1,Low:2}[b.priority]))).slice(0,6).map(taskHTML).join('')||'<div class="empty">No open tasks 🎉</div>';
+ upcoming.innerHTML=[...d.events].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).filter(e=>e.date>=T()).slice(0,5).map(e=>'<div class="task"><span>'+esc(e.title)+'<br><small>'+fmt(e.date)+' · '+esc(e.time)+'</small></span></div>').join('')||'<div class="empty">Nothing scheduled.</div>';
+ let tj=d.journals.find(j=>j.date===T());todayjournal.value=tj?.text||'';
+ journals.innerHTML=d.journals.slice(0,20).map(j=>'<div class="card" style="margin-bottom:9px;padding:12px"><div class="row between"><b>'+fmt(j.date)+' '+esc(j.mood)+'</b><button class="btn mini" onclick="del(\\'journals\\',\\''+j.id+'\\')">✕</button></div><p style="white-space:pre-wrap;margin:8px 0 0">'+esc(j.text)+'</p></div>').join('')||'<div class="empty">Your journal is ready when you are.</div>';
+ goals.innerHTML=d.goals.map(g=>'<div class="task"><span>'+esc(g.title)+'<br><small>'+g.progress+'%</small><div class="progress"><i style="width:'+g.progress+'%"></i></div></span><button class="btn mini" onclick="del(\\'goals\\',\\''+g.id+'\\')">✕</button></div>').join('')||'<div class="empty">Add your first goal.</div>';
+ habits.innerHTML=d.habits.map(h=>{let checked=!!h.checks[T()];return '<div class="task"><input type="checkbox" '+(checked?'checked':'')+' onchange="toggleHabit(\\''+h.id+'\\')"><span>'+esc(h.title)+'</span><button class="btn mini" onclick="del(\\'habits\\',\\''+h.id+'\\')">✕</button></div>'}).join('')||'<div class="empty">Add a habit.</div>';
+ notes.innerHTML=d.notes.slice(0,10).map(n=>'<div class="task"><span><b>'+esc(n.title)+'</b><br><small>'+fmt(n.date)+'</small></span><button class="btn mini" onclick="del(\\'notes\\',\\''+n.id+'\\')">✕</button></div>').join('')||'<div class="empty">No notes yet.</div>';
+ let weekAgo=new Date();weekAgo.setDate(weekAgo.getDate()-6);let ws=weekAgo.toISOString().slice(0,10),weekTasks=d.tasks.filter(x=>x.date>=ws&&x.date<=T()),weekDone=weekTasks.filter(x=>x.done).length;review.innerHTML='<p><b>'+weekDone+'</b> tasks completed in the last 7 days.</p><p><b>'+d.journals.filter(x=>x.date>=ws).length+'</b> journal entries.</p><p><b>'+d.events.filter(x=>x.date>=T()).length+'</b> upcoming events.</p>';
+ stats.innerHTML='<p>Tasks: <b>'+d.tasks.length+'</b></p><p>Completed: <b>'+d.tasks.filter(x=>x.done).length+'</b></p><p>Journal entries: <b>'+d.journals.length+'</b></p><p>Goals: <b>'+d.goals.length+'</b></p><p>Habits: <b>'+d.habits.length+'</b></p><p>Notes: <b>'+d.notes.length+'</b></p>';
+ calendar()
+}
+function toggleHabit(id){let h=d.habits.find(x=>x.id===id);h.checks[T()]=!h.checks[T()];persist()}
+function exportData(){let blob=new Blob([JSON.stringify({version:2,exportedAt:new Date().toISOString(),data:d},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-life-dashboard-backup-'+T()+'.json';a.click();URL.revokeObjectURL(a.href)}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);d=x.data||x;if(!d.tasks||!d.journals)throw Error();persist();alert('Backup imported successfully.')}catch(err){alert('That backup file is not valid.')}};r.readAsText(f);e.target.value=''}
+function resetData(){if(confirm('Delete ALL My Life Dashboard data on this device? This cannot be undone unless you have an export backup.')){localStorage.removeItem(K);location.reload()}}
+function toggleTheme(){document.documentElement.classList.toggle('dark');localStorage.setItem('life-theme',document.documentElement.classList.contains('dark')?'dark':'light');themeBtn.textContent=document.documentElement.classList.contains('dark')?'☀️':'🌙'}
+async function requestNotifications(){if(!('Notification' in window)){alert('Notifications are not supported in this browser.');return}let p=await Notification.requestPermission();alert(p==='granted'?'Notifications enabled. The browser may still require the app to be open for web notifications.':'Notifications were not enabled.')}
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;installBanner.classList.add('show')});
+async function installApp(){if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;installBanner.classList.remove('show')}else{alert('If your browser does not show an install prompt, use the browser menu and choose “Add to Home Screen” or “Install app.”')}}
+if(localStorage.getItem('life-theme')==='dark'){document.documentElement.classList.add('dark');themeBtn.textContent='☀️'}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+render();
+</script>
+</body></html>
