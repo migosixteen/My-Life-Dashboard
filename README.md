@@ -1,22 +1,31 @@
-# My Life Dashboard v2
+# My Life Dashboard v3
 
-Mobile-friendly personal productivity PWA.
+A mobile-first personal productivity PWA.
 
-## Features
-- Home dashboard
-- Tasks with priority, category and recurring-task field
-- Calendar and events
-- Online journal and mood
-- Goals
-- Habits
-- Notes
+## What's new in v3
+- Edit existing tasks
+- Edit existing calendar events
+- Edit journal entries
+- Browser notification reminders
+- Better recurring tasks: completing a recurring task creates the next task
+- Task and event categories
+- Task search and filtering
+- Professional mobile-first UI
 - Dark mode
-- Export/import JSON backup
-- Install prompt / Add to Home Screen
-- Offline caching through a service worker
+- Export/import JSON backups
+- Offline PWA support
 
-## Important
-Data is stored locally in the browser on the device. GitHub Pages hosts the app files; it does not sync your personal data between devices.
+## Put it online with GitHub Pages
+1. Extract this ZIP.
+2. Open your existing `my-life-dashboard` GitHub repository.
+3. Replace the old root files with the v3 files.
+4. Commit the changes.
+5. In GitHub Settings > Pages, publish from the `main` branch and `/ (root)`.
+6. Wait for deployment to finish.
+7. Open the site on your phone and refresh once.
 
-## GitHub Pages
-Put these files in the root of a GitHub repository and enable Pages from the `main` branch and `/ (root)` folder.
+## Important reminder limitation
+Browser notifications work best while the app/browser is active. Standard web apps cannot guarantee exact background reminders on every phone when fully closed. For reliable scheduled push notifications across devices, a future cloud/backend version would be needed.
+
+## Data storage
+Your information is stored locally in the browser on each device. Use Export JSON to back up your data.
