@@ -140,3 +140,21 @@ Default color mappings include Work, Personal, Health, Finance, Family,
 Appointment, Birthday, and Travel. Custom categories receive a stable color automatically.
 
 Existing data continues using the same `life-dashboard-v3` local-storage key.
+
+
+## v4.0 Day View Update
+
+The Calendar now includes a detailed Day View.
+
+- Tap any calendar date once to select it and show that day's complete activity.
+- Day View displays:
+  - Events for the selected day
+  - Tasks due that day
+  - Event time, category color, category, and notes
+  - Task completion status, time, category, and priority
+- Check tasks directly from Day View to mark them complete.
+- Tap an event in Day View to edit it.
+- Tap the same selected calendar date again to add a new event on that date.
+- The selected date is visually highlighted in the month calendar.
+- Calendar category colors from v3.9 remain intact.
+- Existing data continues using the same `life-dashboard-v3` local-storage key.
