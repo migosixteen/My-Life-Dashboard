@@ -1,4 +1,4 @@
-const CACHE='my-life-dashboard-v3-7-shopping-sort';
+const CACHE='my-life-dashboard-v3-8-grocery-stores';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{

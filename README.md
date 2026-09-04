@@ -104,3 +104,22 @@ Updated the Lists / Groceries experience for real shopping use:
 - List summary now shows remaining items and purchased count.
 
 Existing app data continues using the same `life-dashboard-v3` local-storage key.
+
+
+## v3.8 Grocery Stores Update
+
+The shopping workflow is now store-first.
+
+- Groceries is opened from More.
+- Store selector is the primary filter.
+- Built-in common store choices include Walmart, Costco, Food Basics, No Frills,
+  FreshCo, Dollarama, Metro, Sobeys, Loblaws, Real Canadian Superstore, Longo's,
+  Farm Boy, and Other.
+- + New Store opens a store picker and also supports a custom store name.
+- Each store maintains its own shopping items.
+- Status remains To Buy / All / Purchased.
+- Sort remains Default / Grocery Category / A-Z / Price Low-High / Price High-Low.
+- Grocery Category groups the selected store's items into Produce, Meat, Dairy,
+  Bakery, Frozen, Pantry, Household, Personal Care, and Other.
+- Existing lists/stores and items are preserved for existing installations.
+- Existing app data continues using `life-dashboard-v3`.

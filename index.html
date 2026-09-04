@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>My Life Dashboard v3.7</title>
+  <title>My Life Dashboard v3.8</title>
   <style>
 :root{
   --bg:#f2f2f7; --card:#ffffff; --text:#090909; --muted:#74747a; --line:#e5e5ea;
@@ -183,13 +183,14 @@ textarea{min-height:110px;resize:vertical}
 
 
   <section id="listsPage" class="page">
-    <div class="section-title"><h2>Lists</h2><button class="btn small" id="addListBtn">+ New List</button></div>
+    <div class="section-title"><h2>Groceries</h2><button class="btn small" id="addListBtn">+ New Store</button></div>
 
     <div class="card" style="margin-bottom:12px">
+      <div class="muted" style="font-size:.78rem;font-weight:750;margin-bottom:6px">STORE</div>
       <div class="toolbar">
         <select id="listSelector"></select>
-        <button class="btn small secondary" id="editListBtn">Rename</button>
-        <button class="btn small danger" id="deleteListBtn">Delete</button>
+        <button class="btn small secondary" id="editListBtn">Rename Store</button>
+        <button class="btn small danger" id="deleteListBtn">Delete Store</button>
       </div>
       <div class="row space" style="margin-top:8px">
         <div>
@@ -229,7 +230,7 @@ textarea{min-height:110px;resize:vertical}
       
       <div class="card">
         <div class="row space">
-          <div><h2 style="margin-bottom:4px">Lists</h2><div class="muted">Groceries, Costco, errands, packing, and more.</div></div>
+          <div><h2 style="margin-bottom:4px">Groceries</h2><div class="muted">Shop by store: Walmart, Costco, Food Basics, and more.</div></div>
           <button class="btn small" id="openListsBtn">Open</button>
         </div>
       </div>
@@ -279,7 +280,7 @@ textarea{min-height:110px;resize:vertical}
 <script>
 const STORAGE_KEY='life-dashboard-v3';
 const defaultState={
-  tasks:[], events:[], journals:[], expenses:[], debts:[], lists:[{id:'groceries',name:'Groceries',items:[]}],
+  tasks:[], events:[], journals:[], expenses:[], debts:[], lists:[{id:'walmart',name:'Walmart',items:[]},{id:'costco',name:'Costco',items:[]},{id:'food-basics',name:'Food Basics',items:[]},{id:'no-frills',name:'No Frills',items:[]},{id:'freshco',name:'FreshCo',items:[]},{id:'dollarama',name:'Dollarama',items:[]}],
   categories:['Work','Personal','Health','Finance'],
   settings:{dark:false}
 };
@@ -625,7 +626,16 @@ function renderFinance(){
 
 
 function ensureLists(){
-  if(!Array.isArray(state.lists)||!state.lists.length) state.lists=[{id:'groceries',name:'Groceries',items:[]}];
+  if(!Array.isArray(state.lists)||!state.lists.length){
+    state.lists=[
+      {id:'walmart',name:'Walmart',items:[]},
+      {id:'costco',name:'Costco',items:[]},
+      {id:'food-basics',name:'Food Basics',items:[]},
+      {id:'no-frills',name:'No Frills',items:[]},
+      {id:'freshco',name:'FreshCo',items:[]},
+      {id:'dollarama',name:'Dollarama',items:[]}
+    ];
+  }
   state.lists.forEach(l=>{if(!Array.isArray(l.items))l.items=[];});
 }
 function getActiveList(){
@@ -656,16 +666,36 @@ function listItemModal(item=null){
   };
   if(item) $('#deleteListItemBtn').onclick=()=>{list.items=list.items.filter(x=>x.id!==item.id);saveState();closeModal();toast('Item deleted');};
 }
-function newListModal(){
-  openModal(`<h3>New List</h3><label>List Name</label><input id="newListNameInput" placeholder="e.g. Costco"><div class="modal-actions"><button class="btn secondary" id="cancelModalBtn">Cancel</button><button class="btn" id="saveNewListBtn">Create List</button></div>`);
+
+function commonStoreModal(){
+  const common=['Walmart','Costco','Food Basics','No Frills','FreshCo','Dollarama','Metro','Sobeys','Loblaws','Real Canadian Superstore','Longo’s','Farm Boy','Other'];
+  openModal(`<h3>Add Grocery Store</h3>
+    <label>Choose Store</label>
+    <select id="commonStoreSelect">${common.map(x=>`<option>${escapeHtml(x)}</option>`).join('')}</select>
+    <label>Custom Name (optional)</label><input id="customStoreName" placeholder="Use this for another store">
+    <div class="modal-actions"><button class="btn secondary" id="cancelModalBtn">Cancel</button><button class="btn" id="saveCommonStoreBtn">Add Store</button></div>`);
   $('#cancelModalBtn').onclick=closeModal;
-  $('#saveNewListBtn').onclick=()=>{const name=$('#newListNameInput').value.trim();if(!name){toast('Enter a list name');return;}const l={id:uid(),name,items:[]};state.lists.push(l);saveState();closeModal();setTimeout(()=>{$('#listSelector').value=l.id;renderLists();},0);toast('List created');};
+  $('#saveCommonStoreBtn').onclick=()=>{
+    const custom=$('#customStoreName').value.trim();
+    const name=custom||$('#commonStoreSelect').value;
+    if(state.lists.some(l=>l.name.toLowerCase()===name.toLowerCase())){toast('That store already exists');return;}
+    const l={id:uid(),name,items:[]};
+    state.lists.push(l);saveState();closeModal();
+    setTimeout(()=>{$('#listSelector').value=l.id;renderLists();},0);
+    toast('Store added');
+  };
+}
+
+function newListModal(){
+  openModal(`<h3>New Store</h3><label>Store Name</label><input id="newListNameInput" placeholder="e.g. Longo’s"><div class="modal-actions"><button class="btn secondary" id="cancelModalBtn">Cancel</button><button class="btn" id="saveNewListBtn">Add Store</button></div>`);
+  $('#cancelModalBtn').onclick=closeModal;
+  $('#saveNewListBtn').onclick=()=>{const name=$('#newListNameInput').value.trim();if(!name){toast('Enter a store name');return;}const l={id:uid(),name,items:[]};state.lists.push(l);saveState();closeModal();setTimeout(()=>{$('#listSelector').value=l.id;renderLists();},0);toast('Store added');};
 }
 function renameListModal(){
   const list=getActiveList();
-  openModal(`<h3>Rename List</h3><label>List Name</label><input id="renameListInput" value="${escapeAttr(list.name)}"><div class="modal-actions"><button class="btn secondary" id="cancelModalBtn">Cancel</button><button class="btn" id="saveRenameListBtn">Save</button></div>`);
+  openModal(`<h3>Rename Store</h3><label>Store Name</label><input id="renameListInput" value="${escapeAttr(list.name)}"><div class="modal-actions"><button class="btn secondary" id="cancelModalBtn">Cancel</button><button class="btn" id="saveRenameListBtn">Save</button></div>`);
   $('#cancelModalBtn').onclick=closeModal;
-  $('#saveRenameListBtn').onclick=()=>{const name=$('#renameListInput').value.trim();if(!name){toast('Enter a list name');return;}list.name=name;saveState();closeModal();toast('List renamed');};
+  $('#saveRenameListBtn').onclick=()=>{const name=$('#renameListInput').value.trim();if(!name){toast('Enter a store name');return;}list.name=name;saveState();closeModal();toast('Store renamed');};
 }
 function listItemHtml(x){
   return `<div class="item ${x.purchased?'list-purchased':''}">
@@ -714,7 +744,7 @@ function renderLists(){
   const total=list.items.filter(x=>!x.purchased).reduce((s,x)=>s+Number(x.price||0),0);
 
   $('#activeListTitle').textContent=list.name;
-  $('#listSummary').textContent=`${remaining} to buy • ${bought} purchased`;
+  $('#listSummary').textContent=`${remaining} to buy • ${bought} purchased at ${list.name}`;
   $('#listEstimatedTotal').textContent=money(total);
 
   if(sort==='category' && items.length){
@@ -826,10 +856,10 @@ $('#expenseCategoryFilter').onchange=renderAll;
 $('#openJournalBtn').onclick=()=>showPage('journalPage');
 
 $('#openListsBtn').onclick=()=>showPage('listsPage');
-$('#addListBtn').onclick=newListModal;
+$('#addListBtn').onclick=commonStoreModal;
 $('#addListItemBtn').onclick=()=>listItemModal();
 $('#editListBtn').onclick=renameListModal;
-$('#deleteListBtn').onclick=()=>{ensureLists();const list=getActiveList();if(state.lists.length===1){toast('Keep at least one list');return;}if(confirm(`Delete "${list.name}" and all its items?`)){state.lists=state.lists.filter(l=>l.id!==list.id);saveState();toast('List deleted');}};
+$('#deleteListBtn').onclick=()=>{ensureLists();const list=getActiveList();if(state.lists.length===1){toast('Keep at least one store');return;}if(confirm(`Delete "${list.name}" and all its items?`)){state.lists=state.lists.filter(l=>l.id!==list.id);saveState();toast('Store deleted');}};
 $('#clearPurchasedBtn').onclick=()=>{const list=getActiveList();const n=list.items.filter(x=>x.purchased).length;if(!n){toast('No purchased items to clear');return;}if(confirm(`Clear ${n} purchased item${n===1?'':'s'}?`)){list.items=list.items.filter(x=>!x.purchased);saveState();toast('Purchased items cleared');}};
 $('#listSelector').onchange=renderLists;
 $('#listSort').onchange=renderLists;
@@ -860,7 +890,7 @@ $('#importInput').onchange=async e=>{
 $('#clearBtn').onclick=()=>{if(confirm('Clear all app data on this device?')){state=structuredClone(defaultState);saveState();toast('All data cleared');}};
 
 renderAll();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=3.7-shopping-sort');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=3.8-grocery-stores');
 if(Notification.permission==='granted') rescheduleNearTermReminders();
 </script>
 </body>
