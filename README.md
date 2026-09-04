@@ -172,3 +172,19 @@ Calendar events now support both Start Time and End Time.
 - Monthly agenda displays the full time range.
 - Reminder scheduling continues to use the event start time.
 - Existing data continues using the same `life-dashboard-v3` local-storage key.
+
+
+## v4.2 Event Date Range Update
+
+Calendar events now support Start Date, End Date, Start Time, and End Time.
+
+- Overnight events are supported, e.g. Sep 4 5:00 PM → Sep 5 1:00 AM.
+- Validation compares the complete start and end date/time instead of comparing time alone.
+- End Date defaults to the Start Date for new events.
+- Changing Start Date keeps End Date aligned unless the user already changed End Date.
+- Multi-day events appear on every calendar day they span.
+- Day View includes events that started on an earlier day but continue through the selected date.
+- Monthly agenda includes events that overlap the visible month.
+- Existing events without an `endDate` remain compatible and are treated as same-day events.
+- Existing reminders continue to use the event's start date and start time.
+- Existing app data continues using the same `life-dashboard-v3` local-storage key.

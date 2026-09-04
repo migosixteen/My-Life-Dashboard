@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>My Life Dashboard v4.1</title>
+  <title>My Life Dashboard v4.2</title>
   <style>
 :root{
   --bg:#f2f2f7; --card:#ffffff; --text:#090909; --muted:#74747a; --line:#e5e5ea;
@@ -436,7 +436,8 @@ function eventModal(ev=null){
     <h3>${ev?'Edit':'Add'} Event</h3>
     <label>Event</label><input id="eventTitleInput" value="${escapeAttr(ev?.title||'')}" placeholder="Event title">
     <div class="form-grid">
-      <div><label>Date</label><input type="date" id="eventDateInput" value="${ev?.date||todayISO()}"></div>
+      <div><label>Start Date</label><input type="date" id="eventDateInput" value="${ev?.date||todayISO()}"></div>
+      <div><label>End Date</label><input type="date" id="eventEndDateInput" value="${ev?.endDate||ev?.date||todayISO()}"></div>
       <div><label>Start Time</label><input type="time" id="eventTimeInput" value="${ev?.time||''}"></div>
       <div><label>End Time</label><input type="time" id="eventEndTimeInput" value="${ev?.endTime||''}"></div>
       <div><label>Category</label><select id="eventCategoryInput"><option value="">None</option>${cats}</select></div>
@@ -456,15 +457,37 @@ function eventModal(ev=null){
     </div>`);
   $('#cancelModalBtn').onclick=closeModal;
   $('#saveEventBtn').onclick=saveEventFromModal;
+
+  const startDateEl=$('#eventDateInput');
+  const endDateEl=$('#eventEndDateInput');
+  let endDateManuallyChanged=!!ev?.endDate;
+  endDateEl.onchange=()=>{endDateManuallyChanged=true;};
+  startDateEl.onchange=()=>{
+    if(!endDateManuallyChanged || !endDateEl.value || endDateEl.value<startDateEl.value){
+      endDateEl.value=startDateEl.value;
+    }
+  };
+
   if(ev) $('#deleteEventBtn').onclick=()=>{state.events=state.events.filter(x=>x.id!==ev.id);saveState();closeModal();toast('Event deleted');};
 }
 function saveEventFromModal(){
   const title=$('#eventTitleInput').value.trim(); if(!title){toast('Enter an event title');return;}
+  const startDate=$('#eventDateInput').value;
+  const endDate=$('#eventEndDateInput').value||startDate;
   const startTime=$('#eventTimeInput').value;
   const endTime=$('#eventEndTimeInput').value;
-  if(startTime && endTime && endTime<=startTime){toast('End time must be later than start time');return;}
+
+  if(!startDate){toast('Choose a start date');return;}
+  if(endDate<startDate){toast('End date cannot be before start date');return;}
+
+  if(startTime && endTime){
+    const startDT=new Date(`${startDate}T${startTime}:00`);
+    const endDT=new Date(`${endDate}T${endTime}:00`);
+    if(endDT<=startDT){toast('End date/time must be later than start date/time');return;}
+  }
+
   const old=editing.id?state.events.find(e=>e.id===editing.id):null;
-  const obj={id:editing.id||uid(),title,date:$('#eventDateInput').value,time:startTime,endTime,
+  const obj={id:editing.id||uid(),title,date:startDate,endDate,time:startTime,endTime,
     category:$('#eventCategoryInput').value,reminder:$('#eventReminderInput').value,notes:$('#eventNotesInput').value.trim(),
     createdAt:old?.createdAt||Date.now()};
   if(editing.id) state.events=state.events.map(e=>e.id===editing.id?obj:e); else state.events.push(obj);
@@ -574,7 +597,7 @@ function renderDayView(){
   const iso=selectedCalendarDate||todayISO();
   $('#dayViewHeading').textContent=formatDayHeading(iso);
 
-  const events=state.events.filter(e=>e.date===iso)
+  const events=state.events.filter(e=>eventOccursOnDate(e,iso))
     .sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
 
   const tasks=state.tasks.filter(t=>t.due===iso)
@@ -587,7 +610,7 @@ function renderDayView(){
     parts.push(...events.map(e=>{
       const color=categoryColor(e.category);
       return `<div class="day-activity" data-day-event="${e.id}" style="cursor:pointer">
-        <div class="day-time">${escapeHtml(eventTimeRange(e))}</div>
+        <div class="day-time">${escapeHtml(eventDateTimeLabel(e))}</div>
         <div class="day-activity-main">
           <div class="day-activity-title"><span class="event-category-dot" style="background:${color}"></span>${escapeHtml(e.title)}</div>
           <div class="day-activity-meta">
@@ -672,7 +695,7 @@ function renderMonthCalendar(){
       if(cm>11){cm=0;cy=y+1;}
     }
     const iso=calendarDateISO(cy,cm,day);
-    const dayEvents=state.events.filter(e=>e.date===iso).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    const dayEvents=state.events.filter(e=>eventOccursOnDate(e,iso)).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
     const today=iso===todayISO();
     const selected=iso===selectedCalendarDate;
     const chips=dayEvents.slice(0,3).map(e=>`<button class="calendar-event-chip" data-calendar-event="${e.id}" style="--event-color:${categoryColor(e.category)}" title="${escapeAttr(e.title)}">${e.time?escapeHtml(e.endTime?`${e.time}-${e.endTime}`:e.time)+' ':''}${escapeHtml(e.title)}</button>`).join('');
@@ -700,12 +723,34 @@ function renderMonthCalendar(){
     if(e) eventModal(e);
   });
 
-  const monthPrefix=`${y}-${String(m+1).padStart(2,'0')}`;
-  const monthEvents=state.events.filter(e=>(e.date||'').startsWith(monthPrefix))
-    .sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+  const monthStart=calendarDateISO(y,m,1);
+  const monthEnd=calendarDateISO(y,m,new Date(y,m+1,0).getDate());
+  const monthEvents=state.events.filter(e=>{
+    const end=eventEndDate(e);
+    return !!e.date && e.date<=monthEnd && end>=monthStart;
+  }).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
   $('#eventList').innerHTML=monthEvents.length?monthEvents.map(eventHtml).join(''):'<div class="empty">No events this month.</div>';
   $$('[data-edit-event]').forEach(x=>x.onclick=()=>eventModal(state.events.find(e=>e.id===x.dataset.editEvent)));
   renderDayView();
+}
+
+
+function eventEndDate(e){ return e.endDate||e.date; }
+function eventOccursOnDate(e,iso){
+  const end=eventEndDate(e);
+  return !!e.date && iso>=e.date && iso<=end;
+}
+function eventDateTimeLabel(e){
+  const end=eventEndDate(e);
+  if(end && end!==e.date){
+    const sd=new Date(e.date+'T12:00:00');
+    const ed=new Date(end+'T12:00:00');
+    const startLabel=sd.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    const endLabel=ed.toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    const times=(e.time||e.endTime)?` ${e.time||''}${e.endTime?` – ${e.endTime}`:''}`:'';
+    return `${startLabel} → ${endLabel}${times}`;
+  }
+  return eventTimeRange(e);
 }
 
 function eventTimeRange(e){
@@ -720,7 +765,7 @@ function eventHtml(e){
   return `<div class="item" data-edit-event="${e.id}" style="cursor:pointer">
     <div class="date-badge" style="border-bottom:4px solid ${color}"><span class="muted">${d.toLocaleDateString(undefined,{month:'short'})}</span><strong>${d.getDate()}</strong></div>
     <div class="item-main"><div class="item-title"><span class="event-category-dot" style="background:${color}"></span>${escapeHtml(e.title)}</div>
-      <div class="item-meta">${eventTimeRange(e)} ${e.category?`• <span class="pill" style="border:1px solid ${color};color:${color};background:transparent">${escapeHtml(e.category)}</span>`:''}</div>
+      <div class="item-meta">${eventDateTimeLabel(e)} ${e.category?`• <span class="pill" style="border:1px solid ${color};color:${color};background:transparent">${escapeHtml(e.category)}</span>`:''}</div>
       ${e.notes?`<div class="item-meta">${escapeHtml(e.notes)}</div>`:''}
     </div>
   </div>`;
@@ -1145,7 +1190,7 @@ $('#importInput').onchange=async e=>{
 $('#clearBtn').onclick=()=>{if(confirm('Clear all app data on this device?')){state=structuredClone(defaultState);saveState();toast('All data cleared');}};
 
 renderAll();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=4.1-event-duration');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=4.2-event-date-range');
 if(Notification.permission==='granted') rescheduleNearTermReminders();
 </script>
 </body>
