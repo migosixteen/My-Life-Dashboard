@@ -123,3 +123,20 @@ The shopping workflow is now store-first.
   Bakery, Frozen, Pantry, Household, Personal Care, and Other.
 - Existing lists/stores and items are preserved for existing installations.
 - Existing app data continues using `life-dashboard-v3`.
+
+
+## v3.9 Full Calendar Update
+
+- Full month calendar view
+- Previous / next month controls and Today shortcut
+- Tap a day to add an event on that date
+- Tap an event in the month grid to edit it
+- Monthly agenda beneath the calendar
+- Category-specific event colors
+- Category color legend for the visible month
+- Existing reminders and event editing remain available
+
+Default color mappings include Work, Personal, Health, Finance, Family,
+Appointment, Birthday, and Travel. Custom categories receive a stable color automatically.
+
+Existing data continues using the same `life-dashboard-v3` local-storage key.

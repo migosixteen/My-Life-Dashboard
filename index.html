@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>My Life Dashboard v3.8</title>
+  <title>My Life Dashboard v3.9</title>
   <style>
 :root{
   --bg:#f2f2f7; --card:#ffffff; --text:#090909; --muted:#74747a; --line:#e5e5ea;
@@ -108,6 +108,37 @@ textarea{min-height:110px;resize:vertical}
 .list-purchased .item-meta{opacity:.55}
 .qty-badge{min-width:34px;text-align:center;padding:5px 8px;border-radius:10px;background:var(--bg);font-size:.75rem;font-weight:800}
 
+
+.calendar-shell{padding:14px}
+.calendar-toolbar{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;margin-bottom:10px}
+.calendar-heading{text-align:center;min-width:0}
+.calendar-month-title{font-size:1.2rem;font-weight:850;letter-spacing:-.03em}
+.calendar-today-btn{margin-top:4px;border:0;background:transparent;color:var(--accent);font-size:.78rem;font-weight:800;cursor:pointer;padding:4px 10px}
+.calendar-nav-btn{box-shadow:none;border:1px solid var(--line);background:var(--bg);font-size:1.6rem;line-height:1}
+.calendar-legend{display:flex;gap:7px;flex-wrap:wrap;margin:7px 0 13px}
+.calendar-legend-item{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);font-weight:700}
+.calendar-legend-dot{width:8px;height:8px;border-radius:50%}
+.calendar-weekdays,.month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.calendar-weekdays{border-bottom:1px solid var(--line);padding-bottom:6px}
+.calendar-weekdays div{text-align:center;font-size:.67rem;font-weight:800;color:var(--muted);text-transform:uppercase}
+.month-grid{border-left:1px solid var(--line);border-top:1px solid var(--line)}
+.calendar-day{min-height:96px;padding:6px 5px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--card);overflow:hidden;cursor:pointer}
+.calendar-day.outside{background:var(--bg);opacity:.48}
+.calendar-day.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.calendar-day-number{display:flex;align-items:center;justify-content:center;width:25px;height:25px;border-radius:50%;font-size:.78rem;font-weight:750;margin-bottom:4px}
+.calendar-day.today .calendar-day-number{background:var(--accent);color:#fff}
+.calendar-event-chip{display:block;width:100%;border:0;border-left:3px solid var(--event-color);background:var(--bg);color:var(--text);border-radius:6px;padding:3px 4px;margin:3px 0;text-align:left;font-size:.64rem;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.calendar-more{font-size:.62rem;color:var(--muted);font-weight:750;padding:2px 3px}
+.event-category-dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+@media(max-width:640px){
+  .calendar-shell{padding:9px}
+  .calendar-day{min-height:74px;padding:4px 3px}
+  .calendar-day-number{width:22px;height:22px;font-size:.7rem}
+  .calendar-event-chip{font-size:.56rem;padding:2px 3px;border-left-width:2px}
+  .calendar-weekdays div{font-size:.58rem}
+  .calendar-legend{margin-bottom:9px}
+}
+
 </style>
 </head>
 <body>
@@ -148,6 +179,26 @@ textarea{min-height:110px;resize:vertical}
 
   <section id="calendarPage" class="page">
     <div class="section-title"><h2>Calendar</h2><button class="btn small" data-add="event">+ Add Event</button></div>
+
+    <div class="card calendar-shell">
+      <div class="calendar-toolbar">
+        <button class="icon-btn calendar-nav-btn" id="calendarPrevBtn" aria-label="Previous month">‹</button>
+        <div class="calendar-heading">
+          <div class="calendar-month-title" id="calendarMonthTitle"></div>
+          <button class="calendar-today-btn" id="calendarTodayBtn">Today</button>
+        </div>
+        <button class="icon-btn calendar-nav-btn" id="calendarNextBtn" aria-label="Next month">›</button>
+      </div>
+
+      <div id="calendarCategoryLegend" class="calendar-legend"></div>
+
+      <div class="calendar-weekdays" aria-hidden="true">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div class="month-grid" id="monthGrid"></div>
+    </div>
+
+    <div class="section-title"><h2>This Month</h2></div>
     <div class="card calendar-list" id="eventList"></div>
   </section>
 
@@ -464,12 +515,98 @@ function taskHtml(t){
     </div>
   </div>`;
 }
+
+let calendarCursor=new Date();
+calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth(),1);
+
+const calendarColorMap={
+  'Work':'#3478f6',
+  'Personal':'#e11d2e',
+  'Health':'#34a853',
+  'Finance':'#f59e0b',
+  'Family':'#8b5cf6',
+  'Appointment':'#06b6d4',
+  'Birthday':'#ec4899',
+  'Travel':'#14b8a6'
+};
+const calendarColorPalette=['#3478f6','#e11d2e','#34a853','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#14b8a6','#6366f1','#84cc16'];
+
+function categoryColor(category){
+  if(!category) return '#74747a';
+  if(calendarColorMap[category]) return calendarColorMap[category];
+  let hash=0;
+  for(let i=0;i<category.length;i++) hash=((hash<<5)-hash)+category.charCodeAt(i);
+  return calendarColorPalette[Math.abs(hash)%calendarColorPalette.length];
+}
+function calendarDateISO(y,m,d){
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+function renderMonthCalendar(){
+  const grid=$('#monthGrid'); if(!grid) return;
+  const y=calendarCursor.getFullYear(), m=calendarCursor.getMonth();
+  $('#calendarMonthTitle').textContent=calendarCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+
+  const first=new Date(y,m,1);
+  const startOffset=first.getDay();
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const daysPrev=new Date(y,m,0).getDate();
+
+  const relevantCategories=[...new Set(state.events.filter(e=>{
+    if(!e.date) return false;
+    const d=new Date(e.date+'T12:00:00');
+    return d.getFullYear()===y && d.getMonth()===m && e.category;
+  }).map(e=>e.category))];
+
+  $('#calendarCategoryLegend').innerHTML=relevantCategories.length
+    ? relevantCategories.map(c=>`<span class="calendar-legend-item"><span class="calendar-legend-dot" style="background:${categoryColor(c)}"></span>${escapeHtml(c)}</span>`).join('')
+    : '<span class="muted" style="font-size:.72rem">Event colors follow category.</span>';
+
+  let cells='';
+  for(let idx=0;idx<42;idx++){
+    let cy=y, cm=m, day=idx-startOffset+1, outside=false;
+    if(day<1){
+      outside=true; cm=m-1;
+      if(cm<0){cm=11;cy=y-1;}
+      day=daysPrev+day;
+    } else if(day>daysInMonth){
+      outside=true; day=day-daysInMonth; cm=m+1;
+      if(cm>11){cm=0;cy=y+1;}
+    }
+    const iso=calendarDateISO(cy,cm,day);
+    const dayEvents=state.events.filter(e=>e.date===iso).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    const today=iso===todayISO();
+    const chips=dayEvents.slice(0,3).map(e=>`<button class="calendar-event-chip" data-calendar-event="${e.id}" style="--event-color:${categoryColor(e.category)}" title="${escapeAttr(e.title)}">${e.time?escapeHtml(e.time)+' ':''}${escapeHtml(e.title)}</button>`).join('');
+    const more=dayEvents.length>3?`<div class="calendar-more">+${dayEvents.length-3} more</div>`:'';
+    cells+=`<div class="calendar-day ${outside?'outside':''} ${today?'today':''}" data-calendar-date="${iso}">
+      <div class="calendar-day-number">${day}</div>${chips}${more}
+    </div>`;
+  }
+  grid.innerHTML=cells;
+
+  $$('[data-calendar-date]').forEach(cell=>cell.onclick=(ev)=>{
+    if(ev.target.closest('[data-calendar-event]')) return;
+    eventModal({date:cell.dataset.calendarDate});
+  });
+  $$('[data-calendar-event]').forEach(btn=>btn.onclick=(ev)=>{
+    ev.stopPropagation();
+    const e=state.events.find(x=>x.id===btn.dataset.calendarEvent);
+    if(e) eventModal(e);
+  });
+
+  const monthPrefix=`${y}-${String(m+1).padStart(2,'0')}`;
+  const monthEvents=state.events.filter(e=>(e.date||'').startsWith(monthPrefix))
+    .sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
+  $('#eventList').innerHTML=monthEvents.length?monthEvents.map(eventHtml).join(''):'<div class="empty">No events this month.</div>';
+  $$('[data-edit-event]').forEach(x=>x.onclick=()=>eventModal(state.events.find(e=>e.id===x.dataset.editEvent)));
+}
+
 function eventHtml(e){
   const d=new Date(e.date+'T12:00:00');
+  const color=categoryColor(e.category);
   return `<div class="item" data-edit-event="${e.id}" style="cursor:pointer">
-    <div class="date-badge"><span class="muted">${d.toLocaleDateString(undefined,{month:'short'})}</span><strong>${d.getDate()}</strong></div>
-    <div class="item-main"><div class="item-title">${escapeHtml(e.title)}</div>
-      <div class="item-meta">${e.time||'All day'} ${e.category?`• <span class="pill">${escapeHtml(e.category)}</span>`:''}</div>
+    <div class="date-badge" style="border-bottom:4px solid ${color}"><span class="muted">${d.toLocaleDateString(undefined,{month:'short'})}</span><strong>${d.getDate()}</strong></div>
+    <div class="item-main"><div class="item-title"><span class="event-category-dot" style="background:${color}"></span>${escapeHtml(e.title)}</div>
+      <div class="item-meta">${e.time||'All day'} ${e.category?`• <span class="pill" style="border:1px solid ${color};color:${color};background:transparent">${escapeHtml(e.category)}</span>`:''}</div>
       ${e.notes?`<div class="item-meta">${escapeHtml(e.notes)}</div>`:''}
     </div>
   </div>`;
@@ -796,8 +933,7 @@ function renderAll(){
   tasks.sort(sortTasks);
   $('#taskList').innerHTML=tasks.length?tasks.map(taskHtml).join(''):'<div class="empty">No matching tasks.</div>';
 
-  const events=[...state.events].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
-  $('#eventList').innerHTML=events.length?events.map(eventHtml).join(''):'<div class="empty">No events yet.</div>';
+  renderMonthCalendar();
 
   const journals=[...state.journals].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
   $('#journalList').innerHTML=journals.length?journals.map(journalHtml).join(''):'<div class="empty">No journal entries yet.</div>';
@@ -873,6 +1009,11 @@ $('#taskStatusFilter').onchange=renderAll;
 $('#taskCategoryFilter').onchange=renderAll;
 $('#taskSearch').oninput=renderAll;
 
+$('#calendarPrevBtn').onclick=()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()-1,1);renderAll();};
+$('#calendarNextBtn').onclick=()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);renderAll();};
+$('#calendarTodayBtn').onclick=()=>{const n=new Date();calendarCursor=new Date(n.getFullYear(),n.getMonth(),1);renderAll();};
+
+
 $('#addCategoryBtn').onclick=()=>{
   const v=$('#newCategory').value.trim(); if(!v)return;
   if(!state.categories.includes(v)) state.categories.push(v);
@@ -890,7 +1031,7 @@ $('#importInput').onchange=async e=>{
 $('#clearBtn').onclick=()=>{if(confirm('Clear all app data on this device?')){state=structuredClone(defaultState);saveState();toast('All data cleared');}};
 
 renderAll();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=3.8-grocery-stores');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=3.9-full-calendar');
 if(Notification.permission==='granted') rescheduleNearTermReminders();
 </script>
 </body>
