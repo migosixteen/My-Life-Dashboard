@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>My Life Dashboard v4.0</title>
+  <title>My Life Dashboard v4.1</title>
   <style>
 :root{
   --bg:#f2f2f7; --card:#ffffff; --text:#090909; --muted:#74747a; --line:#e5e5ea;
@@ -437,7 +437,8 @@ function eventModal(ev=null){
     <label>Event</label><input id="eventTitleInput" value="${escapeAttr(ev?.title||'')}" placeholder="Event title">
     <div class="form-grid">
       <div><label>Date</label><input type="date" id="eventDateInput" value="${ev?.date||todayISO()}"></div>
-      <div><label>Time</label><input type="time" id="eventTimeInput" value="${ev?.time||''}"></div>
+      <div><label>Start Time</label><input type="time" id="eventTimeInput" value="${ev?.time||''}"></div>
+      <div><label>End Time</label><input type="time" id="eventEndTimeInput" value="${ev?.endTime||''}"></div>
       <div><label>Category</label><select id="eventCategoryInput"><option value="">None</option>${cats}</select></div>
       <div><label>Reminder</label><select id="eventReminderInput">
         <option value="0">At event time</option>
@@ -459,8 +460,11 @@ function eventModal(ev=null){
 }
 function saveEventFromModal(){
   const title=$('#eventTitleInput').value.trim(); if(!title){toast('Enter an event title');return;}
+  const startTime=$('#eventTimeInput').value;
+  const endTime=$('#eventEndTimeInput').value;
+  if(startTime && endTime && endTime<=startTime){toast('End time must be later than start time');return;}
   const old=editing.id?state.events.find(e=>e.id===editing.id):null;
-  const obj={id:editing.id||uid(),title,date:$('#eventDateInput').value,time:$('#eventTimeInput').value,
+  const obj={id:editing.id||uid(),title,date:$('#eventDateInput').value,time:startTime,endTime,
     category:$('#eventCategoryInput').value,reminder:$('#eventReminderInput').value,notes:$('#eventNotesInput').value.trim(),
     createdAt:old?.createdAt||Date.now()};
   if(editing.id) state.events=state.events.map(e=>e.id===editing.id?obj:e); else state.events.push(obj);
@@ -583,7 +587,7 @@ function renderDayView(){
     parts.push(...events.map(e=>{
       const color=categoryColor(e.category);
       return `<div class="day-activity" data-day-event="${e.id}" style="cursor:pointer">
-        <div class="day-time">${escapeHtml(e.time||'All day')}</div>
+        <div class="day-time">${escapeHtml(eventTimeRange(e))}</div>
         <div class="day-activity-main">
           <div class="day-activity-title"><span class="event-category-dot" style="background:${color}"></span>${escapeHtml(e.title)}</div>
           <div class="day-activity-meta">
@@ -671,7 +675,7 @@ function renderMonthCalendar(){
     const dayEvents=state.events.filter(e=>e.date===iso).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
     const today=iso===todayISO();
     const selected=iso===selectedCalendarDate;
-    const chips=dayEvents.slice(0,3).map(e=>`<button class="calendar-event-chip" data-calendar-event="${e.id}" style="--event-color:${categoryColor(e.category)}" title="${escapeAttr(e.title)}">${e.time?escapeHtml(e.time)+' ':''}${escapeHtml(e.title)}</button>`).join('');
+    const chips=dayEvents.slice(0,3).map(e=>`<button class="calendar-event-chip" data-calendar-event="${e.id}" style="--event-color:${categoryColor(e.category)}" title="${escapeAttr(e.title)}">${e.time?escapeHtml(e.endTime?`${e.time}-${e.endTime}`:e.time)+' ':''}${escapeHtml(e.title)}</button>`).join('');
     const more=dayEvents.length>3?`<div class="calendar-more">+${dayEvents.length-3} more</div>`:'';
     cells+=`<div class="calendar-day ${outside?'outside':''} ${today?'today':''} ${selected?'day-view-selected':''}" data-calendar-date="${iso}">
       <div class="calendar-day-number">${day}</div>${chips}${more}
@@ -704,13 +708,19 @@ function renderMonthCalendar(){
   renderDayView();
 }
 
+function eventTimeRange(e){
+  if(e.time && e.endTime) return `${e.time} – ${e.endTime}`;
+  if(e.time) return e.time;
+  return 'All day';
+}
+
 function eventHtml(e){
   const d=new Date(e.date+'T12:00:00');
   const color=categoryColor(e.category);
   return `<div class="item" data-edit-event="${e.id}" style="cursor:pointer">
     <div class="date-badge" style="border-bottom:4px solid ${color}"><span class="muted">${d.toLocaleDateString(undefined,{month:'short'})}</span><strong>${d.getDate()}</strong></div>
     <div class="item-main"><div class="item-title"><span class="event-category-dot" style="background:${color}"></span>${escapeHtml(e.title)}</div>
-      <div class="item-meta">${e.time||'All day'} ${e.category?`• <span class="pill" style="border:1px solid ${color};color:${color};background:transparent">${escapeHtml(e.category)}</span>`:''}</div>
+      <div class="item-meta">${eventTimeRange(e)} ${e.category?`• <span class="pill" style="border:1px solid ${color};color:${color};background:transparent">${escapeHtml(e.category)}</span>`:''}</div>
       ${e.notes?`<div class="item-meta">${escapeHtml(e.notes)}</div>`:''}
     </div>
   </div>`;
@@ -1135,7 +1145,7 @@ $('#importInput').onchange=async e=>{
 $('#clearBtn').onclick=()=>{if(confirm('Clear all app data on this device?')){state=structuredClone(defaultState);saveState();toast('All data cleared');}};
 
 renderAll();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=4.0-day-view');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=4.1-event-duration');
 if(Notification.permission==='granted') rescheduleNearTermReminders();
 </script>
 </body>

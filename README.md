@@ -158,3 +158,17 @@ The Calendar now includes a detailed Day View.
 - The selected date is visually highlighted in the month calendar.
 - Calendar category colors from v3.9 remain intact.
 - Existing data continues using the same `life-dashboard-v3` local-storage key.
+
+
+## v4.1 Event Duration Update
+
+Calendar events now support both Start Time and End Time.
+
+- Add/Edit Event now includes separate Start Time and End Time fields.
+- End time must be later than the start time.
+- Existing events without an end time remain compatible.
+- Month calendar displays the time range when available.
+- Day View displays the full start-to-end duration.
+- Monthly agenda displays the full time range.
+- Reminder scheduling continues to use the event start time.
+- Existing data continues using the same `life-dashboard-v3` local-storage key.

@@ -1,4 +1,4 @@
-const CACHE='my-life-dashboard-v4-0-day-view';
+const CACHE='my-life-dashboard-v4-1-event-duration';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
