@@ -1,4 +1,4 @@
-const CACHE='my-life-dashboard-v3-5-finance';
+const CACHE='my-life-dashboard-v3-6-lists';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{

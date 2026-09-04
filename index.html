@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>My Life Dashboard Finance</title>
+  <title>My Life Dashboard v3.6</title>
   <style>
 :root{
   --bg:#f2f2f7; --card:#ffffff; --text:#090909; --muted:#74747a; --line:#e5e5ea;
@@ -100,6 +100,14 @@ textarea{min-height:110px;resize:vertical}
   .card{border-radius:20px}
   .brand h1{font-size:1.9rem}
 }
+
+.list-check{appearance:none;-webkit-appearance:none;width:24px;height:24px;min-width:24px;border:2px solid var(--accent);border-radius:50%;position:relative;background:transparent;cursor:pointer}
+.list-check:checked{background:var(--accent);border-color:var(--accent)}
+.list-check:checked:after{content:"✓";position:absolute;left:4px;top:0;color:#fff;font-weight:900;font-size:15px}
+.list-purchased .item-title{text-decoration:line-through;opacity:.55}
+.list-purchased .item-meta{opacity:.55}
+.qty-badge{min-width:34px;text-align:center;padding:5px 8px;border-radius:10px;background:var(--bg);font-size:.75rem;font-weight:800}
+
 </style>
 </head>
 <body>
@@ -173,10 +181,58 @@ textarea{min-height:110px;resize:vertical}
     </div>
   </section>
 
+
+  <section id="listsPage" class="page">
+    <div class="section-title"><h2>Lists</h2><button class="btn small" id="addListBtn">+ New List</button></div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="toolbar">
+        <select id="listSelector"></select>
+        <button class="btn small secondary" id="editListBtn">Rename</button>
+        <button class="btn small danger" id="deleteListBtn">Delete</button>
+      </div>
+      <div class="row space" style="margin-top:8px">
+        <div>
+          <div class="item-title" id="activeListTitle">Groceries</div>
+          <div class="item-meta" id="listSummary">0 items</div>
+        </div>
+        <button class="btn small" id="addListItemBtn">+ Item</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <select id="listCategoryFilter">
+          <option value="">All Categories</option>
+          <option>Produce</option><option>Meat</option><option>Dairy</option><option>Bakery</option>
+          <option>Frozen</option><option>Pantry</option><option>Household</option>
+          <option>Personal Care</option><option>Other</option>
+        </select>
+        <select id="listStatusFilter">
+          <option value="open">To Buy</option>
+          <option value="all">All</option>
+          <option value="purchased">Purchased</option>
+        </select>
+      </div>
+      <div id="listItems"></div>
+      <div class="row space" style="margin-top:14px">
+        <div><div class="muted" style="font-size:.78rem">Estimated Total</div><div class="item-title" id="listEstimatedTotal">$0.00</div></div>
+        <button class="btn small secondary" id="clearPurchasedBtn">Clear Purchased</button>
+      </div>
+    </div>
+  </section>
+
   <section id="morePage" class="page">
     <div class="section-title"><h2>More</h2></div>
     <div class="grid">
+      
       <div class="card">
+        <div class="row space">
+          <div><h2 style="margin-bottom:4px">Lists</h2><div class="muted">Groceries, Costco, errands, packing, and more.</div></div>
+          <button class="btn small" id="openListsBtn">Open</button>
+        </div>
+      </div>
+<div class="card">
         <h2>Journal</h2>
         <div class="muted" style="margin-bottom:10px">Open your journal entries.</div>
         <button class="btn small secondary" id="openJournalBtn">Open Journal</button>
@@ -222,7 +278,7 @@ textarea{min-height:110px;resize:vertical}
 <script>
 const STORAGE_KEY='life-dashboard-v3';
 const defaultState={
-  tasks:[], events:[], journals:[], expenses:[], debts:[],
+  tasks:[], events:[], journals:[], expenses:[], debts:[], lists:[{id:'groceries',name:'Groceries',items:[]}],
   categories:['Work','Personal','Health','Finance'],
   settings:{dark:false}
 };
@@ -566,6 +622,81 @@ function renderFinance(){
   $$('[data-edit-debt]').forEach(x=>x.onclick=()=>debtModal(state.debts.find(d=>d.id===x.dataset.editDebt)));
 }
 
+
+function ensureLists(){
+  if(!Array.isArray(state.lists)||!state.lists.length) state.lists=[{id:'groceries',name:'Groceries',items:[]}];
+  state.lists.forEach(l=>{if(!Array.isArray(l.items))l.items=[];});
+}
+function getActiveList(){
+  ensureLists();
+  const id=$('#listSelector')?.value;
+  return state.lists.find(l=>l.id===id)||state.lists[0];
+}
+function listItemModal(item=null){
+  const list=getActiveList();
+  const cats=['Produce','Meat','Dairy','Bakery','Frozen','Pantry','Household','Personal Care','Other'];
+  openModal(`<h3>${item?'Edit':'Add'} Item</h3>
+    <label>Item</label><input id="listItemNameInput" value="${escapeAttr(item?.name||'')}" placeholder="e.g. Milk">
+    <div class="form-grid">
+      <div><label>Quantity</label><input id="listItemQtyInput" value="${escapeAttr(item?.qty||'1')}" placeholder="1"></div>
+      <div><label>Category</label><select id="listItemCategoryInput">${cats.map(c=>`<option ${item?.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div><label>Estimated Price (CAD)</label><input type="number" min="0" step="0.01" id="listItemPriceInput" value="${item?.price??''}" placeholder="0.00"></div>
+      <div><label>Purchased</label><select id="listItemPurchasedInput"><option value="false" ${!item?.purchased?'selected':''}>No</option><option value="true" ${item?.purchased?'selected':''}>Yes</option></select></div>
+    </div>
+    <label>Notes</label><textarea id="listItemNotesInput">${escapeHtml(item?.notes||'')}</textarea>
+    <div class="modal-actions">${item?'<button class="btn danger" id="deleteListItemBtn">Delete</button>':''}<button class="btn secondary" id="cancelModalBtn">Cancel</button><button class="btn" id="saveListItemBtn">Save Item</button></div>`);
+  $('#cancelModalBtn').onclick=closeModal;
+  $('#saveListItemBtn').onclick=()=>{
+    const name=$('#listItemNameInput').value.trim(); if(!name){toast('Enter an item name');return;}
+    const obj={id:item?.id||uid(),name,qty:$('#listItemQtyInput').value.trim()||'1',category:$('#listItemCategoryInput').value,
+      price:parseFloat($('#listItemPriceInput').value||0),purchased:$('#listItemPurchasedInput').value==='true',
+      notes:$('#listItemNotesInput').value.trim(),createdAt:item?.createdAt||Date.now()};
+    list.items=item?list.items.map(x=>x.id===item.id?obj:x):[...list.items,obj]; saveState(); closeModal(); toast(item?'Item updated':'Item added');
+  };
+  if(item) $('#deleteListItemBtn').onclick=()=>{list.items=list.items.filter(x=>x.id!==item.id);saveState();closeModal();toast('Item deleted');};
+}
+function newListModal(){
+  openModal(`<h3>New List</h3><label>List Name</label><input id="newListNameInput" placeholder="e.g. Costco"><div class="modal-actions"><button class="btn secondary" id="cancelModalBtn">Cancel</button><button class="btn" id="saveNewListBtn">Create List</button></div>`);
+  $('#cancelModalBtn').onclick=closeModal;
+  $('#saveNewListBtn').onclick=()=>{const name=$('#newListNameInput').value.trim();if(!name){toast('Enter a list name');return;}const l={id:uid(),name,items:[]};state.lists.push(l);saveState();closeModal();setTimeout(()=>{$('#listSelector').value=l.id;renderLists();},0);toast('List created');};
+}
+function renameListModal(){
+  const list=getActiveList();
+  openModal(`<h3>Rename List</h3><label>List Name</label><input id="renameListInput" value="${escapeAttr(list.name)}"><div class="modal-actions"><button class="btn secondary" id="cancelModalBtn">Cancel</button><button class="btn" id="saveRenameListBtn">Save</button></div>`);
+  $('#cancelModalBtn').onclick=closeModal;
+  $('#saveRenameListBtn').onclick=()=>{const name=$('#renameListInput').value.trim();if(!name){toast('Enter a list name');return;}list.name=name;saveState();closeModal();toast('List renamed');};
+}
+function listItemHtml(x){
+  return `<div class="item ${x.purchased?'list-purchased':''}">
+    <input class="list-check" type="checkbox" data-toggle-list-item="${x.id}" ${x.purchased?'checked':''}>
+    <div class="item-main" data-edit-list-item="${x.id}" style="cursor:pointer">
+      <div class="row space"><div class="item-title">${escapeHtml(x.name)}</div><div class="row" style="gap:6px"><span class="qty-badge">${escapeHtml(x.qty||'1')}</span><span class="item-title">${Number(x.price||0)>0?money(x.price):''}</span></div></div>
+      <div class="item-meta"><span class="pill">${escapeHtml(x.category||'Other')}</span>${x.notes?` • ${escapeHtml(x.notes)}`:''}</div>
+    </div>
+  </div>`;
+}
+function renderLists(){
+  ensureLists();
+  const selector=$('#listSelector'); if(!selector)return;
+  const prev=selector.value;
+  selector.innerHTML=state.lists.map(l=>`<option value="${l.id}">${escapeHtml(l.name)}</option>`).join('');
+  selector.value=state.lists.some(l=>l.id===prev)?prev:state.lists[0].id;
+  const list=getActiveList(), cat=$('#listCategoryFilter')?.value||'', status=$('#listStatusFilter')?.value||'open';
+  let items=[...list.items];
+  if(cat)items=items.filter(x=>x.category===cat);
+  if(status==='open')items=items.filter(x=>!x.purchased);
+  if(status==='purchased')items=items.filter(x=>x.purchased);
+  items.sort((a,b)=>Number(a.purchased)-Number(b.purchased)||a.createdAt-b.createdAt);
+  const bought=list.items.filter(x=>x.purchased).length;
+  const total=list.items.filter(x=>!x.purchased).reduce((s,x)=>s+Number(x.price||0),0);
+  $('#activeListTitle').textContent=list.name;
+  $('#listSummary').textContent=`${list.items.length} item${list.items.length===1?'':'s'} • ${bought} purchased`;
+  $('#listEstimatedTotal').textContent=money(total);
+  $('#listItems').innerHTML=items.length?items.map(listItemHtml).join(''):'<div class="empty">No items here yet.</div>';
+  $$('[data-toggle-list-item]').forEach(el=>el.onchange=()=>{const x=list.items.find(i=>i.id===el.dataset.toggleListItem);if(x){x.purchased=el.checked;saveState();}});
+  $$('[data-edit-list-item]').forEach(el=>el.onclick=()=>{const x=list.items.find(i=>i.id===el.dataset.editListItem);if(x)listItemModal(x);});
+}
+
 function renderAll(){
   applyTheme();
   $('#todayText').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
@@ -600,6 +731,7 @@ function renderAll(){
 
   bindDynamic();
   renderFinance();
+  renderLists();
 }
 function sortTasks(a,b){
   const da=a.due||'9999-12-31', db=b.due||'9999-12-31';
@@ -644,6 +776,17 @@ $('#expenseMonthFilter').onchange=renderAll;
 $('#expenseCategoryFilter').onchange=renderAll;
 $('#openJournalBtn').onclick=()=>showPage('journalPage');
 
+$('#openListsBtn').onclick=()=>showPage('listsPage');
+$('#addListBtn').onclick=newListModal;
+$('#addListItemBtn').onclick=()=>listItemModal();
+$('#editListBtn').onclick=renameListModal;
+$('#deleteListBtn').onclick=()=>{ensureLists();const list=getActiveList();if(state.lists.length===1){toast('Keep at least one list');return;}if(confirm(`Delete "${list.name}" and all its items?`)){state.lists=state.lists.filter(l=>l.id!==list.id);saveState();toast('List deleted');}};
+$('#clearPurchasedBtn').onclick=()=>{const list=getActiveList();const n=list.items.filter(x=>x.purchased).length;if(!n){toast('No purchased items to clear');return;}if(confirm(`Clear ${n} purchased item${n===1?'':'s'}?`)){list.items=list.items.filter(x=>!x.purchased);saveState();toast('Purchased items cleared');}};
+$('#listSelector').onchange=renderLists;
+$('#listCategoryFilter').onchange=renderLists;
+$('#listStatusFilter').onchange=renderLists;
+
+
 $('#modalBackdrop').onclick=e=>{if(e.target===$('#modalBackdrop')) closeModal();};
 $('#themeBtn').onclick=()=>{state.settings.dark=!state.settings.dark;saveState();};
 $('#notifyBtn').onclick=requestNotifications;
@@ -668,7 +811,7 @@ $('#importInput').onchange=async e=>{
 $('#clearBtn').onclick=()=>{if(confirm('Clear all app data on this device?')){state=structuredClone(defaultState);saveState();toast('All data cleared');}};
 
 renderAll();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=3.5-finance');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=3.6-lists');
 if(Notification.permission==='granted') rescheduleNearTermReminders();
 </script>
 </body>

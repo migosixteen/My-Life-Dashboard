@@ -67,3 +67,18 @@ Journal remains available under More.
 
 The app keeps the same `life-dashboard-v3` local-storage key so existing productivity
 data should remain on the same GitHub Pages URL/browser. Export a JSON backup before upgrading.
+
+
+## v3.6 Lists Edition
+Adds reusable shopping and checklist support under More:
+- Default Groceries list
+- Multiple named lists (Costco, Walmart, Errands, Packing, Household, etc.)
+- Add/edit/delete items
+- Quantity, category, estimated price, purchased checkbox, notes
+- Estimated total for remaining items
+- Filter by category/status
+- Clear purchased
+- Rename/delete lists
+
+Existing productivity, finance, calendar, reminders, journal, categories,
+export/import, and local data remain in place.
