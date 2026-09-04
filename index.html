@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>My Life Dashboard v4.6</title>
+  <title>My Life Dashboard v5.1</title>
   <style>
 :root{
   --bg:#f2f2f7; --card:#ffffff; --text:#090909; --muted:#74747a; --line:#e5e5ea;
@@ -205,6 +205,46 @@ textarea{min-height:110px;resize:vertical}
 .category-color-dot{width:12px;height:12px;border-radius:50%;flex:0 0 12px}
 .category-delete-btn{border:0;background:transparent;color:var(--muted);font-size:1.15rem;cursor:pointer;padding:3px 6px}
 
+
+.work-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.metric-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px}
+.metric-value{font-size:1.25rem;font-weight:900;margin-top:3px}
+.metric-sub{font-size:.68rem;color:var(--muted);margin-top:2px}
+.work-job-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.work-job-card{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:13px;position:relative;overflow:hidden}
+.work-job-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--job-color)}
+.work-job-title{font-size:1rem;font-weight:900}
+.work-job-meta{font-size:.74rem;color:var(--muted);margin-top:3px}
+.work-job-period{margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+.work-period-range{font-size:.8rem;font-weight:800}
+.work-period-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.work-period-stat{background:var(--bg);border-radius:10px;padding:8px}
+.work-period-stat strong{display:block;font-size:.95rem}
+.shift-row{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--job-color);border-radius:14px;padding:11px;margin-bottom:8px;cursor:pointer}
+.shift-date-box{width:48px;flex:0 0 48px;text-align:center;background:var(--bg);border-radius:10px;padding:6px 4px}
+.shift-date-box .mon{font-size:.62rem;text-transform:uppercase;color:var(--muted);font-weight:850}
+.shift-date-box .day{font-size:1.1rem;font-weight:900}
+.shift-main{min-width:0;flex:1}
+.shift-title{font-size:.92rem;font-weight:850}
+.shift-time{font-size:.76rem;color:var(--muted);margin-top:2px}
+.shift-hours{font-size:.72rem;font-weight:800;margin-top:5px}
+.shift-status{font-size:.66rem;font-weight:850;padding:3px 7px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
+.job-color-input{width:44px;height:39px;padding:2px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.pay-period-chip{display:inline-block;font-size:.66rem;font-weight:850;padding:3px 7px;border-radius:999px;background:var(--bg);border:1px solid var(--line);margin-top:5px}
+@media(max-width:620px){
+  .work-metrics{grid-template-columns:1fr 1fr}
+  .work-metrics .metric-card:last-child{grid-column:1/-1}
+  .bottom-nav .nav-inner{gap:0}
+  .bottom-nav .nav-btn{font-size:.67rem;padding-left:5px;padding-right:5px}
+}
+
+
+.calendar-shift-chip{background:color-mix(in srgb,var(--event-color) 14%,var(--bg));font-style:normal}
+.calendar-shift-chip::before{content:"Work • ";font-size:.58rem;opacity:.72}
+.work-calendar-pill{display:inline-block;font-size:.64rem;font-weight:850;padding:3px 7px;border-radius:999px;border:1px solid var(--job-color);color:var(--job-color);background:transparent}
+.day-mode-shift{border-style:solid}
+.day-mode-shift .day-mode-event-title::before{content:"Work • ";font-size:.66rem;opacity:.72}
+
 </style>
 </head>
 <body>
@@ -365,7 +405,41 @@ textarea{min-height:110px;resize:vertical}
     </div>
   </section>
 
-  <section id="morePage" class="page">
+  
+  <section id="workPage" class="page">
+    <div class="section-title">
+      <h2>Work</h2>
+      <div class="row">
+        <button class="btn small secondary" id="addJobBtn">+ Job</button>
+        <button class="btn small" id="addShiftBtn">+ Shift</button>
+      </div>
+    </div>
+
+    <div class="work-metrics">
+      <div class="metric-card"><div class="muted">This Week</div><div class="metric-value" id="workWeekHours">0h</div><div class="metric-sub">scheduled/worked</div></div>
+      <div class="metric-card"><div class="muted">Current Pay Period</div><div class="metric-value" id="workPeriodHours">0h</div><div class="metric-sub">all jobs</div></div>
+      <div class="metric-card"><div class="muted">Est. Gross</div><div class="metric-value" id="workPeriodGross">$0.00</div><div class="metric-sub">current periods</div></div>
+    </div>
+
+    <div class="section-title"><h2>Jobs & Pay Periods</h2></div>
+    <div id="jobCards" class="work-job-grid"></div>
+
+    <div class="section-title">
+      <h2>Shifts</h2>
+      <div class="row">
+        <select id="shiftJobFilter"><option value="">All Jobs</option></select>
+        <select id="shiftStatusFilter">
+          <option value="upcoming">Upcoming</option>
+          <option value="all">All</option>
+          <option value="worked">Worked</option>
+          <option value="scheduled">Scheduled</option>
+        </select>
+      </div>
+    </div>
+    <div id="shiftList"></div>
+  </section>
+
+<section id="morePage" class="page">
     <div class="section-title"><h2>More</h2></div>
     <div class="grid">
       
@@ -399,7 +473,7 @@ textarea{min-height:110px;resize:vertical}
         </div>
       </div>
       <div class="card">
-        <h2>About v4.6</h2>
+        <h2>About v5.1</h2>
         <div class="muted">Task and event editing, reminders, recurring tasks, categories, notifications, journal editing, export/import, dark mode, and offline PWA support.</div>
       </div>
     </div>
@@ -414,6 +488,7 @@ textarea{min-height:110px;resize:vertical}
     <button class="nav-btn" data-page="tasksPage">Tasks</button>
     <button class="nav-btn" data-page="calendarPage">Calendar</button>
     <button class="nav-btn" data-page="moneyPage">Money</button>
+    <button class="nav-btn" data-page="workPage">Work</button>
     <button class="nav-btn" data-page="morePage">More</button>
   </div>
 </nav>
@@ -429,6 +504,8 @@ const defaultState={
   tasks:[], events:[], journals:[], expenses:[], debts:[], lists:[{id:'walmart',name:'Walmart',items:[]},{id:'costco',name:'Costco',items:[]},{id:'food-basics',name:'Food Basics',items:[]},{id:'no-frills',name:'No Frills',items:[]},{id:'freshco',name:'FreshCo',items:[]},{id:'dollarama',name:'Dollarama',items:[]}],
   categories:['Work','Personal','Health','Finance'],
   categoryColors:{Work:'#3478f6',Personal:'#e11d2e',Health:'#34a853',Finance:'#f59e0b'},
+  jobs:[],
+  shifts:[],
   settings:{dark:false}
 };
 let state=loadState();
@@ -681,11 +758,30 @@ function renderDayView(){
 
   const events=state.events.filter(e=>eventOccursOnDate(e,iso))
     .sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
-
+  const shifts=state.shifts.filter(s=>shiftOccursOnDate(s,iso))
+    .sort((a,b)=>((iso===a.date?a.startTime:'00:00')||'99:99').localeCompare((iso===b.date?b.startTime:'00:00')||'99:99'));
   const tasks=state.tasks.filter(t=>t.due===iso)
     .sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
 
   let parts=[];
+
+  if(shifts.length){
+    parts.push('<div class="day-view-section-title">Work Shifts</div>');
+    parts.push(...shifts.map(s=>{
+      const j=getJob(s.jobId)||{name:'Unknown Job',color:'#74747a'};
+      return `<div class="day-activity" data-day-shift="${s.id}" style="cursor:pointer">
+        <div class="day-time">${escapeHtml(shiftCalendarLabel(s,iso).replace((j.name||'Work')+' • ',''))}</div>
+        <div class="day-activity-main">
+          <div class="day-activity-title"><span class="event-category-dot" style="background:${j.color||'#74747a'}"></span>${escapeHtml(j.name)}</div>
+          <div class="day-activity-meta">
+            <span class="work-calendar-pill" style="--job-color:${j.color||'#74747a'}">${escapeHtml(j.type||'Work')}</span>
+            <span>${formatHours(shiftHours(s))}</span>
+            ${s.notes?`<span>${escapeHtml(s.notes)}</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }));
+  }
 
   if(events.length){
     parts.push('<div class="day-view-section-title">Events</div>');
@@ -723,24 +819,25 @@ function renderDayView(){
   }
 
   if(!parts.length){
-    card.innerHTML='<div class="day-view-empty">No events or tasks scheduled for this day.</div>';
+    card.innerHTML='<div class="day-view-empty">No work shifts, events, or tasks scheduled for this day.</div>';
   }else{
     card.innerHTML=parts.join('');
   }
 
+  $$('[data-day-shift]').forEach(el=>el.onclick=()=>{
+    const s=state.shifts.find(x=>x.id===el.dataset.dayShift);
+    if(s) shiftModal(s);
+  });
   $$('[data-day-event]').forEach(el=>el.onclick=()=>{
     const e=state.events.find(x=>x.id===el.dataset.dayEvent);
     if(e) eventModal(e);
   });
-
   $$('[data-day-task]').forEach(el=>el.onchange=()=>{
     const t=state.tasks.find(x=>x.id===el.dataset.dayTask);
     if(!t) return;
     const wasDone=!!t.done;
     t.done=el.checked;
-    if(!wasDone && t.done && t.recurrence && t.recurrence!=='none'){
-      createNextRecurringTask(t);
-    }
+    if(!wasDone && t.done && t.recurrence && t.recurrence!=='none') createNextRecurringTask(t);
     saveState();
   });
 }
@@ -807,6 +904,8 @@ function renderFullDayMode(){
 
   const events=state.events.filter(e=>eventOccursOnDate(e,iso))
     .sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
+  const shifts=state.shifts.filter(s=>shiftOccursOnDate(s,iso))
+    .sort((a,b)=>((iso===a.date?a.startTime:'00:00')||'99:99').localeCompare((iso===b.date?b.startTime:'00:00')||'99:99'));
   const tasks=state.tasks.filter(t=>t.due===iso)
     .sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
 
@@ -814,10 +913,6 @@ function renderFullDayMode(){
   $('#dayModeAllDay').innerHTML=allDay.length
     ? `<div class="day-mode-label">All day</div>`+allDay.map(e=>`<div class="day-mode-all-day-item" data-day-mode-event="${e.id}" style="--event-color:${categoryColor(e.category)}"><span class="event-category-dot" style="background:${categoryColor(e.category)}"></span><strong>${escapeHtml(e.title)}</strong>${e.category?`<span class="pill">${escapeHtml(e.category)}</span>`:''}</div>`).join('')
     : '';
-
-  const timedEvents=events.filter(e=>e.time);
-  const timedTasks=tasks.filter(t=>t.time);
-  const untimedTasks=tasks.filter(t=>!t.time);
 
   if(tasks.length){
     const taskHtml=`<div class="day-mode-task-list"><div class="day-mode-label">Tasks</div>`+
@@ -836,11 +931,21 @@ function renderFullDayMode(){
   }
 
   const pxPerMinute=58/60;
-  const busyBands=timedEvents.map(e=>{
-    const seg=eventSegmentForDay(e,iso); if(!seg) return '';
-    const color=categoryColor(e.category);
-    return `<div class="day-mode-busy-band" style="top:${(seg.start*pxPerMinute).toFixed(2)}px;height:${Math.max(2,(seg.end-seg.start)*pxPerMinute).toFixed(2)}px;--event-color:${color};--busy-bg:${color}"></div>`;
-  }).join('');
+  const timedEvents=events.filter(e=>e.time);
+
+  const busyBands=[
+    ...timedEvents.map(e=>{
+      const seg=eventSegmentForDay(e,iso); if(!seg) return '';
+      const color=categoryColor(e.category);
+      return `<div class="day-mode-busy-band" style="top:${(seg.start*pxPerMinute).toFixed(2)}px;height:${Math.max(2,(seg.end-seg.start)*pxPerMinute).toFixed(2)}px;--event-color:${color};--busy-bg:${color}"></div>`;
+    }),
+    ...shifts.map(s=>{
+      const seg=shiftSegmentForDay(s,iso); if(!seg) return '';
+      const j=getJob(s.jobId)||{color:'#74747a'};
+      const color=j.color||'#74747a';
+      return `<div class="day-mode-busy-band" style="top:${(seg.start*pxPerMinute).toFixed(2)}px;height:${Math.max(2,(seg.end-seg.start)*pxPerMinute).toFixed(2)}px;--event-color:${color};--busy-bg:${color}"></div>`;
+    })
+  ].join('');
 
   const eventBlocks=timedEvents.map(e=>{
     const seg=eventSegmentForDay(e,iso); if(!seg) return '';
@@ -855,6 +960,19 @@ function renderFullDayMode(){
     </div>`;
   }).join('');
 
+  const shiftBlocks=shifts.map(s=>{
+    const seg=shiftSegmentForDay(s,iso); if(!seg) return '';
+    const j=getJob(s.jobId)||{name:'Work',color:'#74747a'};
+    const top=seg.start*pxPerMinute;
+    const visualHeight=Math.max(28,(seg.end-seg.start)*pxPerMinute);
+    const displayStart=iso===s.date ? (s.startTime||minutesToLabel(seg.start)) : '12:00 AM';
+    const displayEnd=iso===(s.endDate||s.date) ? (s.endTime||minutesToLabel(seg.end)) : '12:00 AM';
+    return `<div class="day-mode-event busy-block day-mode-shift" data-day-mode-shift="${s.id}" style="top:${top.toFixed(2)}px;height:${visualHeight.toFixed(2)}px;--event-color:${j.color||'#74747a'}">
+      <div class="day-mode-event-title">${escapeHtml(j.name)}</div>
+      <div class="day-mode-event-time">${escapeHtml(displayStart)} – ${escapeHtml(displayEnd)} • ${formatHours(shiftHours(s))}</div>
+    </div>`;
+  }).join('');
+
   let nowLine='';
   if(iso===todayISO()){
     const now=new Date();
@@ -863,8 +981,12 @@ function renderFullDayMode(){
     nowLine=`<div class="day-mode-now-label" style="top:${top.toFixed(2)}px">${escapeHtml(now.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}))}</div><div class="day-mode-now-line" style="top:${top.toFixed(2)}px"></div>`;
   }
 
-  $('#dayModeTimeline').innerHTML=`<div class="day-mode-grid">${grid}</div><div class="day-mode-events-layer">${busyBands}${eventBlocks}</div>${nowLine}`;
+  $('#dayModeTimeline').innerHTML=`<div class="day-mode-grid">${grid}</div><div class="day-mode-events-layer">${busyBands}${eventBlocks}${shiftBlocks}</div>${nowLine}`;
 
+  $$('[data-day-mode-shift]').forEach(el=>el.onclick=()=>{
+    const s=state.shifts.find(x=>x.id===el.dataset.dayModeShift);
+    if(s) shiftModal(s);
+  });
   $$('[data-day-mode-event]').forEach(el=>el.onclick=()=>{
     const e=state.events.find(x=>x.id===el.dataset.dayModeEvent);
     if(e) eventModal(e);
@@ -888,25 +1010,84 @@ function setCalendarView(mode){
   if(isDay) renderFullDayMode(); else renderMonthCalendar();
 }
 
+
+function shiftOccursOnDate(s,iso){
+  if(!s?.date) return false;
+  const end=s.endDate||s.date;
+  return iso>=s.date && iso<=end && s.status!=='cancelled';
+}
+function shiftSegmentForDay(s,iso){
+  if(!shiftOccursOnDate(s,iso) || !s.startTime) return null;
+  const startDate=s.date;
+  const endDate=s.endDate||s.date;
+  let start=iso===startDate ? timeToMinutes(s.startTime) : 0;
+  let end;
+  if(iso===endDate){
+    end=timeToMinutes(s.endTime);
+    if(end===null) end=1440;
+  }else end=1440;
+  if(start===null) start=0;
+  if(end<=start){
+    if(startDate===endDate) end=Math.min(1440,start+60);
+    else end=1440;
+  }
+  return {start,end};
+}
+function shiftCalendarLabel(s,iso){
+  const job=getJob(s.jobId);
+  const name=job?.name||'Work';
+  const endDate=s.endDate||s.date;
+  let startLabel=iso===s.date ? s.startTime : '12:00 AM';
+  let endLabel=iso===endDate ? s.endTime : '12:00 AM';
+  return `${name} • ${startLabel}–${endLabel}`;
+}
+function shiftAgendaHtml(s){
+  const j=getJob(s.jobId)||{name:'Unknown Job',color:'#74747a'};
+  const d=new Date(s.date+'T12:00:00');
+  const range=(s.endDate||s.date)===s.date
+    ? `${s.startTime} – ${s.endTime}`
+    : `${fmtDate(s.date,{month:'short',day:'numeric'})} ${s.startTime} → ${fmtDate(s.endDate||s.date,{month:'short',day:'numeric'})} ${s.endTime}`;
+  return `<div class="item" data-calendar-shift-agenda="${s.id}" style="cursor:pointer">
+    <div class="date-badge" style="border-bottom:4px solid ${j.color||'#74747a'}"><span class="muted">${d.toLocaleDateString(undefined,{month:'short'})}</span><strong>${d.getDate()}</strong></div>
+    <div class="item-main">
+      <div class="item-title"><span class="event-category-dot" style="background:${j.color||'#74747a'}"></span>${escapeHtml(j.name)}</div>
+      <div class="item-meta">${escapeHtml(range)} • <span class="work-calendar-pill" style="--job-color:${j.color||'#74747a'}">${escapeHtml(j.type||'Work')}</span></div>
+      ${s.notes?`<div class="item-meta">${escapeHtml(s.notes)}</div>`:''}
+    </div>
+  </div>`;
+}
+
 function renderMonthCalendar(){
   const grid=$('#monthGrid'); if(!grid) return;
   const y=calendarCursor.getFullYear(), m=calendarCursor.getMonth();
-  $('#calendarMonthTitle').textContent=calendarViewMode==='day' ? new Date((selectedCalendarDate||todayISO())+'T12:00:00').toLocaleDateString(undefined,{month:'long',year:'numeric'}) : calendarCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  $('#calendarMonthTitle').textContent=calendarViewMode==='day'
+    ? new Date((selectedCalendarDate||todayISO())+'T12:00:00').toLocaleDateString(undefined,{month:'long',year:'numeric'})
+    : calendarCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
 
   const first=new Date(y,m,1);
   const startOffset=first.getDay();
   const daysInMonth=new Date(y,m+1,0).getDate();
   const daysPrev=new Date(y,m,0).getDate();
+  const monthStart=calendarDateISO(y,m,1);
+  const monthEnd=calendarDateISO(y,m,daysInMonth);
 
   const relevantCategories=[...new Set(state.events.filter(e=>{
-    if(!e.date) return false;
-    const d=new Date(e.date+'T12:00:00');
-    return d.getFullYear()===y && d.getMonth()===m && e.category;
+    const end=eventEndDate(e);
+    return e.date && e.date<=monthEnd && end>=monthStart && e.category;
   }).map(e=>e.category))];
 
-  $('#calendarCategoryLegend').innerHTML=relevantCategories.length
-    ? relevantCategories.map(c=>`<span class="calendar-legend-item"><span class="calendar-legend-dot" style="background:${categoryColor(c)}"></span>${escapeHtml(c)}</span>`).join('')
-    : '<span class="muted" style="font-size:.72rem">Event colors follow category.</span>';
+  const relevantJobs=state.jobs.filter(j=>state.shifts.some(s=>{
+    const end=s.endDate||s.date;
+    return s.jobId===j.id && s.status!=='cancelled' && s.date<=monthEnd && end>=monthStart;
+  }));
+
+  const legendParts=[
+    ...relevantCategories.map(c=>`<span class="calendar-legend-item"><span class="calendar-legend-dot" style="background:${categoryColor(c)}"></span>${escapeHtml(c)}</span>`),
+    ...relevantJobs.map(j=>`<span class="calendar-legend-item"><span class="calendar-legend-dot" style="background:${j.color||'#74747a'}"></span>${escapeHtml(j.name)} (Work)</span>`)
+  ];
+  $('#calendarCategoryLegend').innerHTML=legendParts.length
+    ? legendParts.join('')
+    : '<span class="muted" style="font-size:.72rem">Event colors follow category; work shifts follow job color.</span>';
 
   let cells='';
   for(let idx=0;idx<42;idx++){
@@ -919,11 +1100,25 @@ function renderMonthCalendar(){
       outside=true; day=day-daysInMonth; cm=m+1;
       if(cm>11){cm=0;cy=y+1;}
     }
+
     const iso=calendarDateISO(cy,cm,day);
-    const dayEvents=state.events.filter(e=>eventOccursOnDate(e,iso)).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    const dayEvents=state.events.filter(e=>eventOccursOnDate(e,iso))
+      .map(e=>({kind:'event',time:e.time||'',obj:e}))
+      .concat(state.shifts.filter(s=>shiftOccursOnDate(s,iso)).map(s=>({kind:'shift',time:(iso===s.date?s.startTime:'00:00')||'',obj:s})))
+      .sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+
     const today=iso===todayISO();
     const selected=iso===selectedCalendarDate;
-    const chips=dayEvents.slice(0,3).map(e=>`<button class="calendar-event-chip" data-calendar-event="${e.id}" style="--event-color:${categoryColor(e.category)}" title="${escapeAttr(e.title)}">${e.time?escapeHtml(e.endTime?`${e.time}-${e.endTime}`:e.time)+' ':''}${escapeHtml(e.title)}</button>`).join('');
+    const chips=dayEvents.slice(0,3).map(item=>{
+      if(item.kind==='event'){
+        const e=item.obj;
+        return `<button class="calendar-event-chip" data-calendar-event="${e.id}" style="--event-color:${categoryColor(e.category)}" title="${escapeAttr(e.title)}">${e.time?escapeHtml(e.endTime?`${e.time}-${e.endTime}`:e.time)+' ':''}${escapeHtml(e.title)}</button>`;
+      }
+      const s=item.obj, j=getJob(s.jobId)||{name:'Work',color:'#74747a'};
+      const label=shiftCalendarLabel(s,iso);
+      return `<button class="calendar-event-chip calendar-shift-chip" data-calendar-shift="${s.id}" style="--event-color:${j.color||'#74747a'}" title="${escapeAttr(label)}">${escapeHtml(label)}</button>`;
+    }).join('');
+
     const more=dayEvents.length>3?`<div class="calendar-more">+${dayEvents.length-3} more</div>`:'';
     cells+=`<div class="calendar-day ${outside?'outside':''} ${today?'today':''} ${selected?'day-view-selected':''}" data-calendar-date="${iso}">
       <div class="calendar-day-number">${day}</div>${chips}${more}
@@ -932,7 +1127,7 @@ function renderMonthCalendar(){
   grid.innerHTML=cells;
 
   $$('[data-calendar-date]').forEach(cell=>cell.onclick=(ev)=>{
-    if(ev.target.closest('[data-calendar-event]')) return;
+    if(ev.target.closest('[data-calendar-event],[data-calendar-shift]')) return;
     selectedCalendarDate=cell.dataset.calendarDate;
     setCalendarView('day');
     renderDayView();
@@ -942,15 +1137,29 @@ function renderMonthCalendar(){
     const e=state.events.find(x=>x.id===btn.dataset.calendarEvent);
     if(e) eventModal(e);
   });
+  $$('[data-calendar-shift]').forEach(btn=>btn.onclick=(ev)=>{
+    ev.stopPropagation();
+    const s=state.shifts.find(x=>x.id===btn.dataset.calendarShift);
+    if(s) shiftModal(s);
+  });
 
-  const monthStart=calendarDateISO(y,m,1);
-  const monthEnd=calendarDateISO(y,m,new Date(y,m+1,0).getDate());
-  const monthEvents=state.events.filter(e=>{
-    const end=eventEndDate(e);
-    return !!e.date && e.date<=monthEnd && end>=monthStart;
-  }).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||'')));
-  $('#eventList').innerHTML=monthEvents.length?monthEvents.map(eventHtml).join(''):'<div class="empty">No events this month.</div>';
+  const monthItems=[
+    ...state.events.filter(e=>{
+      const end=eventEndDate(e);
+      return !!e.date && e.date<=monthEnd && end>=monthStart;
+    }).map(e=>({kind:'event',date:e.date,time:e.time||'',obj:e})),
+    ...state.shifts.filter(s=>{
+      const end=s.endDate||s.date;
+      return s.status!=='cancelled' && s.date<=monthEnd && end>=monthStart;
+    }).map(s=>({kind:'shift',date:s.date,time:s.startTime||'',obj:s}))
+  ].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+
+  $('#eventList').innerHTML=monthItems.length
+    ? monthItems.map(x=>x.kind==='event'?eventHtml(x.obj):shiftAgendaHtml(x.obj)).join('')
+    : '<div class="empty">No events or work shifts this month.</div>';
+
   $$('[data-edit-event]').forEach(x=>x.onclick=()=>eventModal(state.events.find(e=>e.id===x.dataset.editEvent)));
+  $$('[data-calendar-shift-agenda]').forEach(x=>x.onclick=()=>shiftModal(state.shifts.find(s=>s.id===x.dataset.calendarShiftAgenda)));
   renderDayView();
 }
 
@@ -1292,6 +1501,251 @@ function renderLists(){
   });
 }
 
+
+function moneyCAD(n){return Number(n||0).toLocaleString(undefined,{style:'currency',currency:'CAD'});}
+function hmToMinutes(t){
+  if(!t) return null;
+  const [h,m]=t.split(':').map(Number);
+  if(Number.isNaN(h)||Number.isNaN(m)) return null;
+  return h*60+m;
+}
+function shiftHours(s){
+  if(!s.startTime || !s.endTime) return 0;
+  const sd=s.date;
+  const ed=s.endDate||s.date;
+  let start=new Date(`${sd}T${s.startTime}:00`);
+  let end=new Date(`${ed}T${s.endTime}:00`);
+  if(end<=start && ed===sd) end=new Date(end.getTime()+86400000);
+  const mins=Math.max(0,(end-start)/60000-Number(s.breakMinutes||0));
+  return mins/60;
+}
+function formatHours(n){return `${Number(n||0).toFixed(2).replace(/\.00$/,'')}h`;}
+function getJob(id){return state.jobs.find(j=>j.id===id);}
+function jobColor(id){return getJob(id)?.color||'#74747a';}
+function isoLocal(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function addDaysDate(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+function startOfWeekISO(iso){
+  const d=new Date(iso+'T12:00:00');
+  const diff=d.getDay();
+  d.setDate(d.getDate()-diff);
+  return isoLocal(d);
+}
+function payPeriodForJob(job, referenceISO=todayISO()){
+  const ref=new Date(referenceISO+'T12:00:00');
+  const freq=job.payFrequency||'biweekly';
+
+  if(freq==='semimonthly'){
+    const y=ref.getFullYear(),m=ref.getMonth(),day=ref.getDate();
+    if(day<=15) return {start:isoLocal(new Date(y,m,1)),end:isoLocal(new Date(y,m,15))};
+    return {start:isoLocal(new Date(y,m,16)),end:isoLocal(new Date(y,m+1,0))};
+  }
+
+  if(freq==='monthly'){
+    if(job.payAnchor){
+      const anchor=new Date(job.payAnchor+'T12:00:00');
+      let start=new Date(anchor);
+      while(start<=ref){
+        const next=new Date(start.getFullYear(),start.getMonth()+1,start.getDate());
+        if(next>ref) break;
+        start=next;
+      }
+      let end=new Date(start.getFullYear(),start.getMonth()+1,start.getDate());
+      end.setDate(end.getDate()-1);
+      return {start:isoLocal(start),end:isoLocal(end)};
+    }
+    return {start:isoLocal(new Date(ref.getFullYear(),ref.getMonth(),1)),end:isoLocal(new Date(ref.getFullYear(),ref.getMonth()+1,0))};
+  }
+
+  const days=freq==='weekly'?7:14;
+  const anchor=new Date((job.payAnchor||todayISO())+'T12:00:00');
+  const delta=Math.floor((ref-anchor)/86400000);
+  const periods=Math.floor(delta/days);
+  let start=addDaysDate(anchor,periods*days);
+  while(ref<start) start=addDaysDate(start,-days);
+  const end=addDaysDate(start,days-1);
+  return {start:isoLocal(start),end:isoLocal(end)};
+}
+function shiftsInRange(jobId,start,end){
+  return state.shifts.filter(s=>s.jobId===jobId && s.status!=='cancelled' && s.date>=start && s.date<=end);
+}
+function jobPeriodStats(job,reference=todayISO()){
+  const p=payPeriodForJob(job,reference);
+  const shifts=shiftsInRange(job.id,p.start,p.end);
+  const hours=shifts.reduce((a,s)=>a+shiftHours(s),0);
+  const gross=hours*Number(job.hourlyRate||0);
+  return {...p,hours,gross};
+}
+function jobModal(job=null){
+  editing={type:'job',id:job?.id||null};
+  openModal(`
+    <h3>${job?'Edit':'Add'} Job</h3>
+    <label>Job / Employer</label>
+    <input id="jobNameInput" value="${escapeAttr(job?.name||'')}" placeholder="e.g. Full-time Job">
+    <div class="form-grid">
+      <div><label>Employment Type</label><select id="jobTypeInput">
+        <option value="full-time" ${job?.type==='full-time'?'selected':''}>Full-time</option>
+        <option value="part-time" ${job?.type==='part-time'?'selected':''}>Part-time</option>
+        <option value="casual" ${job?.type==='casual'?'selected':''}>Casual</option>
+        <option value="contract" ${job?.type==='contract'?'selected':''}>Contract</option>
+      </select></div>
+      <div><label>Hourly Rate (CAD, optional)</label><input id="jobRateInput" type="number" min="0" step="0.01" value="${job?.hourlyRate??''}" placeholder="0.00"></div>
+      <div><label>Pay Frequency</label><select id="jobPayFrequencyInput">
+        <option value="weekly" ${job?.payFrequency==='weekly'?'selected':''}>Weekly</option>
+        <option value="biweekly" ${!job||job?.payFrequency==='biweekly'?'selected':''}>Biweekly</option>
+        <option value="semimonthly" ${job?.payFrequency==='semimonthly'?'selected':''}>Semi-monthly (1–15 / 16–end)</option>
+        <option value="monthly" ${job?.payFrequency==='monthly'?'selected':''}>Monthly</option>
+      </select></div>
+      <div><label>Pay Period Anchor Start</label><input id="jobPayAnchorInput" type="date" value="${job?.payAnchor||todayISO()}"></div>
+      <div><label>Schedule Color</label><input class="job-color-input" id="jobColorInput" type="color" value="${job?.color||'#3478f6'}"></div>
+    </div>
+    <div class="muted" style="font-size:.74rem;margin-top:5px">For weekly/biweekly pay, choose a known first day of a pay period. Semi-monthly uses the 1st–15th and 16th–end of month.</div>
+    <div class="modal-actions">
+      ${job?'<button class="btn danger" id="deleteJobBtn">Delete Job</button>':''}
+      <button class="btn secondary" id="cancelModalBtn">Cancel</button>
+      <button class="btn" id="saveJobBtn">Save Job</button>
+    </div>`);
+  $('#cancelModalBtn').onclick=closeModal;
+  $('#saveJobBtn').onclick=saveJobFromModal;
+  if(job) $('#deleteJobBtn').onclick=()=>{
+    if(confirm(`Delete "${job.name}"? Existing shifts for this job will also be deleted.`)){
+      state.jobs=state.jobs.filter(j=>j.id!==job.id);
+      state.shifts=state.shifts.filter(s=>s.jobId!==job.id);
+      saveState();closeModal();toast('Job deleted');
+    }
+  };
+}
+function saveJobFromModal(){
+  const name=$('#jobNameInput').value.trim(); if(!name){toast('Enter a job name');return;}
+  const old=editing.id?getJob(editing.id):null;
+  const obj={
+    id:editing.id||uid(),name,type:$('#jobTypeInput').value,
+    hourlyRate:Number($('#jobRateInput').value||0),
+    payFrequency:$('#jobPayFrequencyInput').value,
+    payAnchor:$('#jobPayAnchorInput').value||todayISO(),
+    color:$('#jobColorInput').value||'#3478f6',
+    createdAt:old?.createdAt||Date.now()
+  };
+  if(editing.id) state.jobs=state.jobs.map(j=>j.id===editing.id?obj:j); else state.jobs.push(obj);
+  saveState();closeModal();toast(editing.id?'Job updated':'Job added');
+}
+function shiftModal(shift=null,presetDate=null){
+  if(!state.jobs.length){toast('Add a job first');jobModal();return;}
+  editing={type:'shift',id:shift?.id||null};
+  const opts=state.jobs.map(j=>`<option value="${j.id}" ${shift?.jobId===j.id?'selected':''}>${escapeHtml(j.name)}</option>`).join('');
+  openModal(`
+    <h3>${shift?'Edit':'Add'} Shift</h3>
+    <label>Job</label><select id="shiftJobInput">${opts}</select>
+    <div class="form-grid">
+      <div><label>Start Date</label><input type="date" id="shiftDateInput" value="${shift?.date||presetDate||todayISO()}"></div>
+      <div><label>End Date</label><input type="date" id="shiftEndDateInput" value="${shift?.endDate||shift?.date||presetDate||todayISO()}"></div>
+      <div><label>Start Time</label><input type="time" id="shiftStartInput" value="${shift?.startTime||''}"></div>
+      <div><label>End Time</label><input type="time" id="shiftEndInput" value="${shift?.endTime||''}"></div>
+      <div><label>Unpaid Break (minutes)</label><input type="number" min="0" step="5" id="shiftBreakInput" value="${shift?.breakMinutes??0}"></div>
+      <div><label>Status</label><select id="shiftStatusInput">
+        <option value="scheduled" ${!shift||shift?.status==='scheduled'?'selected':''}>Scheduled</option>
+        <option value="worked" ${shift?.status==='worked'?'selected':''}>Worked</option>
+        <option value="cancelled" ${shift?.status==='cancelled'?'selected':''}>Cancelled</option>
+      </select></div>
+    </div>
+    <label>Notes</label><textarea id="shiftNotesInput" placeholder="Location, overtime, notes...">${escapeHtml(shift?.notes||'')}</textarea>
+    <div class="modal-actions">
+      ${shift?'<button class="btn danger" id="deleteShiftBtn">Delete Shift</button>':''}
+      <button class="btn secondary" id="cancelModalBtn">Cancel</button>
+      <button class="btn" id="saveShiftBtn">Save Shift</button>
+    </div>`);
+  $('#cancelModalBtn').onclick=closeModal;
+  $('#saveShiftBtn').onclick=saveShiftFromModal;
+  const sd=$('#shiftDateInput'),ed=$('#shiftEndDateInput');
+  let endChanged=!!shift?.endDate;
+  ed.onchange=()=>endChanged=true;
+  sd.onchange=()=>{if(!endChanged||!ed.value||ed.value<sd.value)ed.value=sd.value;};
+  if(shift) $('#deleteShiftBtn').onclick=()=>{state.shifts=state.shifts.filter(s=>s.id!==shift.id);saveState();closeModal();toast('Shift deleted');};
+}
+function saveShiftFromModal(){
+  const date=$('#shiftDateInput').value,endDate=$('#shiftEndDateInput').value||date;
+  const startTime=$('#shiftStartInput').value,endTime=$('#shiftEndInput').value;
+  if(!date||!startTime||!endTime){toast('Date, start time, and end time are required');return;}
+  const start=new Date(`${date}T${startTime}:00`),end=new Date(`${endDate}T${endTime}:00`);
+  if(end<=start){toast('Shift end must be later than shift start');return;}
+  const old=editing.id?state.shifts.find(s=>s.id===editing.id):null;
+  const obj={
+    id:editing.id||uid(),jobId:$('#shiftJobInput').value,date,endDate,startTime,endTime,
+    breakMinutes:Number($('#shiftBreakInput').value||0),
+    status:$('#shiftStatusInput').value,notes:$('#shiftNotesInput').value.trim(),
+    createdAt:old?.createdAt||Date.now()
+  };
+  if(editing.id) state.shifts=state.shifts.map(s=>s.id===editing.id?obj:s); else state.shifts.push(obj);
+  saveState();closeModal();toast(editing.id?'Shift updated':'Shift added');
+}
+function shiftTimeLabel(s){
+  const same=(s.endDate||s.date)===s.date;
+  if(same) return `${s.startTime} – ${s.endTime}`;
+  return `${s.startTime} → ${fmtDate(s.endDate||s.date,{month:'short',day:'numeric'})} ${s.endTime}`;
+}
+function renderWork(){
+  if(!$('#jobCards')) return;
+  const today=todayISO();
+  const weekStart=startOfWeekISO(today),weekEnd=isoLocal(addDaysDate(new Date(weekStart+'T12:00:00'),6));
+  const weekShifts=state.shifts.filter(s=>s.status!=='cancelled'&&s.date>=weekStart&&s.date<=weekEnd);
+  $('#workWeekHours').textContent=formatHours(weekShifts.reduce((a,s)=>a+shiftHours(s),0));
+
+  let periodHours=0,periodGross=0;
+  const cards=state.jobs.map(job=>{
+    const p=jobPeriodStats(job,today);
+    periodHours+=p.hours; periodGross+=p.gross;
+    return `<div class="work-job-card" style="--job-color:${job.color||'#74747a'}" data-edit-job="${job.id}">
+      <div class="row space">
+        <div>
+          <div class="work-job-title">${escapeHtml(job.name)}</div>
+          <div class="work-job-meta">${escapeHtml(job.type||'')} ${job.hourlyRate?`• ${moneyCAD(job.hourlyRate)}/hr`:''}</div>
+          <span class="pay-period-chip">${escapeHtml((job.payFrequency||'biweekly').replace('semimonthly','semi-monthly'))}</span>
+        </div>
+        <button class="btn small secondary" data-add-shift-job="${job.id}">+ Shift</button>
+      </div>
+      <div class="work-job-period">
+        <div class="muted" style="font-size:.68rem">Current Pay Period</div>
+        <div class="work-period-range">${escapeHtml(fmtDate(p.start,{month:'short',day:'numeric'}))} – ${escapeHtml(fmtDate(p.end,{month:'short',day:'numeric',year:'numeric'}))}</div>
+        <div class="work-period-stats">
+          <div class="work-period-stat"><span class="muted">Hours</span><strong>${formatHours(p.hours)}</strong></div>
+          <div class="work-period-stat"><span class="muted">Est. Gross</span><strong>${moneyCAD(p.gross)}</strong></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  $('#jobCards').innerHTML=cards||'<div class="empty">No jobs yet. Add your full-time or part-time job to start tracking shifts and pay periods.</div>';
+  $('#workPeriodHours').textContent=formatHours(periodHours);
+  $('#workPeriodGross').textContent=moneyCAD(periodGross);
+
+  const filter=$('#shiftJobFilter'),current=filter.value;
+  filter.innerHTML='<option value="">All Jobs</option>'+state.jobs.map(j=>`<option value="${j.id}" ${current===j.id?'selected':''}>${escapeHtml(j.name)}</option>`).join('');
+  const status=$('#shiftStatusFilter').value||'upcoming';
+  let shifts=[...state.shifts];
+  if(filter.value) shifts=shifts.filter(s=>s.jobId===filter.value);
+  if(status==='upcoming') shifts=shifts.filter(s=>s.status!=='cancelled'&&s.date>=today);
+  else if(status!=='all') shifts=shifts.filter(s=>s.status===status);
+  shifts.sort((a,b)=>(a.date+a.startTime).localeCompare(b.date+b.startTime));
+  if(status==='all'||status==='worked') shifts.reverse();
+
+  $('#shiftList').innerHTML=shifts.length?shifts.map(s=>{
+    const j=getJob(s.jobId)||{name:'Unknown Job',color:'#74747a'};
+    const d=new Date(s.date+'T12:00:00');
+    return `<div class="shift-row" data-edit-shift="${s.id}" style="--job-color:${j.color||'#74747a'}">
+      <div class="shift-date-box"><div class="mon">${d.toLocaleDateString(undefined,{month:'short'})}</div><div class="day">${d.getDate()}</div></div>
+      <div class="shift-main">
+        <div class="row space"><div class="shift-title">${escapeHtml(j.name)}</div><span class="shift-status">${escapeHtml(s.status)}</span></div>
+        <div class="shift-time">${escapeHtml(shiftTimeLabel(s))}${s.breakMinutes?` • ${s.breakMinutes} min break`:''}</div>
+        <div class="shift-hours">${formatHours(shiftHours(s))}${j.hourlyRate?` • est. ${moneyCAD(shiftHours(s)*j.hourlyRate)}`:''}</div>
+      </div>
+    </div>`;
+  }).join(''):'<div class="empty">No matching shifts.</div>';
+
+  $$('[data-edit-job]').forEach(x=>x.onclick=e=>{if(e.target.closest('[data-add-shift-job]'))return;jobModal(getJob(x.dataset.editJob));});
+  $$('[data-add-shift-job]').forEach(x=>x.onclick=e=>{e.stopPropagation();const job=getJob(x.dataset.addShiftJob);shiftModal({jobId:job.id,date:todayISO(),endDate:todayISO(),status:'scheduled'});});
+  $$('[data-edit-shift]').forEach(x=>x.onclick=()=>shiftModal(state.shifts.find(s=>s.id===x.dataset.editShift)));
+}
+
 function renderAll(){
   applyTheme();
   $('#todayText').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
@@ -1335,6 +1789,7 @@ function renderAll(){
   bindDynamic();
   renderFinance();
   renderLists();
+  renderWork();
 }
 function sortTasks(a,b){
   const da=a.due||'9999-12-31', db=b.due||'9999-12-31';
@@ -1388,6 +1843,12 @@ function rescheduleNearTermReminders(){
 $$('.nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
 $$('[data-add]').forEach(b=>b.onclick=()=>b.dataset.add==='task'?taskModal():b.dataset.add==='event'?eventModal():journalModal());
 $('#fab').onclick=()=>taskModal();
+
+$('#addJobBtn').onclick=()=>jobModal();
+$('#addShiftBtn').onclick=()=>shiftModal();
+$('#shiftJobFilter').onchange=renderWork;
+$('#shiftStatusFilter').onchange=renderWork;
+
 
 $('#addExpenseBtn').onclick=()=>expenseModal();
 $('#addDebtBtn').onclick=()=>debtModal();
@@ -1449,7 +1910,7 @@ $('#importInput').onchange=async e=>{
 $('#clearBtn').onclick=()=>{if(confirm('Clear all app data on this device?')){state=structuredClone(defaultState);saveState();toast('All data cleared');}};
 
 renderAll();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=4.6-category-color-picker');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=5.1-calendar-linked-work');
 if(Notification.permission==='granted') rescheduleNearTermReminders();
 </script>
 </body>

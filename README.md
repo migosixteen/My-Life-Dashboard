@@ -260,3 +260,58 @@ Categories can now have user-selected colors.
 - Custom colors are stored in `categoryColors` inside the existing `life-dashboard-v3` local data.
 - JSON export/import now preserves custom category colors.
 - Existing installations remain compatible.
+
+
+## v5.0 Work Shift & Pay Period Tracker
+
+A dedicated Work feature has been added for full-time, part-time, casual, or contract jobs.
+
+### Jobs
+- Add multiple employers/jobs.
+- Employment type: Full-time, Part-time, Casual, or Contract.
+- Optional hourly rate in CAD.
+- Choose a schedule color for each job.
+- Configure pay frequency:
+  - Weekly
+  - Biweekly
+  - Semi-monthly
+  - Monthly
+- Weekly and biweekly jobs use a Pay Period Anchor Start date so the app can calculate the active pay period.
+- Semi-monthly uses the 1st–15th and 16th–end of month.
+
+### Shifts
+- Track Start Date, End Date, Start Time, End Time.
+- Overnight shifts are supported.
+- Track unpaid break minutes.
+- Status: Scheduled, Worked, or Cancelled.
+- Notes field for location, overtime, or other details.
+- Calculated paid hours automatically subtract unpaid breaks.
+
+### Pay Period Dashboard
+For each job, the Work page shows:
+- Current pay-period date range
+- Hours in the current pay period
+- Estimated gross pay when an hourly rate is entered
+- Current-week hours
+- Combined current-pay-period hours and estimated gross across all jobs
+
+### Data
+- Jobs and shifts are included in the existing JSON backup/export.
+- Existing app data remains compatible with the same `life-dashboard-v3` local-storage key.
+
+
+## v5.1 Work ↔ Calendar Integration
+
+Work shifts now automatically appear in the main Calendar without creating duplicate events.
+
+- Month view displays work shifts alongside regular calendar events.
+- Each shift uses the color assigned to its job.
+- The calendar legend includes both event categories and jobs.
+- Day View includes a dedicated Work Shifts section.
+- Day Mode places shifts directly on the 24-hour timeline as full-duration busy blocks.
+- Work shift time ranges count as occupied/busy time, making open periods easier to identify.
+- Overnight and multi-day shifts are split visually across each day they span.
+- Tapping a shift from Month view, Day View, Day Mode, or the monthly agenda opens the original Work shift for editing.
+- Editing or deleting the shift in Work automatically changes what appears in Calendar because the calendar reads the same shift record rather than creating a duplicate.
+- Cancelled shifts do not appear in the Calendar.
+- Existing local data remains compatible through the same `life-dashboard-v3` storage key.
