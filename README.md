@@ -82,3 +82,25 @@ Adds reusable shopping and checklist support under More:
 
 Existing productivity, finance, calendar, reminders, journal, categories,
 export/import, and local data remain in place.
+
+
+## v3.7 Shopping Sort Update
+
+Updated the Lists / Groceries experience for real shopping use:
+
+- Selecting a list such as Walmart now shows all items for that list based on Status.
+- Status options:
+  - To Buy
+  - All
+  - Purchased
+- The old category filter is replaced with Sort options:
+  - Default
+  - Grocery Category
+  - A–Z
+  - Price Low–High
+  - Price High–Low
+- Grocery Category sort groups items under category headings such as Produce, Meat, Dairy, Frozen, Pantry, Household, and more.
+- Checking an item as purchased automatically removes it from the To Buy view.
+- List summary now shows remaining items and purchased count.
+
+Existing app data continues using the same `life-dashboard-v3` local-storage key.

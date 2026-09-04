@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>My Life Dashboard v3.6</title>
+  <title>My Life Dashboard v3.7</title>
   <style>
 :root{
   --bg:#f2f2f7; --card:#ffffff; --text:#090909; --muted:#74747a; --line:#e5e5ea;
@@ -202,16 +202,17 @@ textarea{min-height:110px;resize:vertical}
 
     <div class="card">
       <div class="toolbar">
-        <select id="listCategoryFilter">
-          <option value="">All Categories</option>
-          <option>Produce</option><option>Meat</option><option>Dairy</option><option>Bakery</option>
-          <option>Frozen</option><option>Pantry</option><option>Household</option>
-          <option>Personal Care</option><option>Other</option>
+        <select id="listSort">
+          <option value="default">Sort: Default</option>
+          <option value="category">Sort: Grocery Category</option>
+          <option value="az">Sort: A–Z</option>
+          <option value="priceAsc">Sort: Price Low–High</option>
+          <option value="priceDesc">Sort: Price High–Low</option>
         </select>
         <select id="listStatusFilter">
-          <option value="open">To Buy</option>
-          <option value="all">All</option>
-          <option value="purchased">Purchased</option>
+          <option value="open">Status: To Buy</option>
+          <option value="all">Status: All</option>
+          <option value="purchased">Status: Purchased</option>
         </select>
       </div>
       <div id="listItems"></div>
@@ -681,20 +682,68 @@ function renderLists(){
   const prev=selector.value;
   selector.innerHTML=state.lists.map(l=>`<option value="${l.id}">${escapeHtml(l.name)}</option>`).join('');
   selector.value=state.lists.some(l=>l.id===prev)?prev:state.lists[0].id;
-  const list=getActiveList(), cat=$('#listCategoryFilter')?.value||'', status=$('#listStatusFilter')?.value||'open';
+
+  const list=getActiveList();
+  const status=$('#listStatusFilter')?.value||'open';
+  const sort=$('#listSort')?.value||'default';
+
   let items=[...list.items];
-  if(cat)items=items.filter(x=>x.category===cat);
-  if(status==='open')items=items.filter(x=>!x.purchased);
-  if(status==='purchased')items=items.filter(x=>x.purchased);
-  items.sort((a,b)=>Number(a.purchased)-Number(b.purchased)||a.createdAt-b.createdAt);
+
+  if(status==='open') items=items.filter(x=>!x.purchased);
+  if(status==='purchased') items=items.filter(x=>x.purchased);
+
+  if(sort==='category'){
+    const order=['Produce','Meat','Dairy','Bakery','Frozen','Pantry','Household','Personal Care','Other'];
+    items.sort((a,b)=>{
+      const ai=order.indexOf(a.category||'Other');
+      const bi=order.indexOf(b.category||'Other');
+      return (ai-bi) || (a.name||'').localeCompare(b.name||'');
+    });
+  } else if(sort==='az'){
+    items.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  } else if(sort==='priceAsc'){
+    items.sort((a,b)=>Number(a.price||0)-Number(b.price||0));
+  } else if(sort==='priceDesc'){
+    items.sort((a,b)=>Number(b.price||0)-Number(a.price||0));
+  } else {
+    items.sort((a,b)=>Number(a.purchased)-Number(b.purchased)||a.createdAt-b.createdAt);
+  }
+
   const bought=list.items.filter(x=>x.purchased).length;
+  const remaining=list.items.filter(x=>!x.purchased).length;
   const total=list.items.filter(x=>!x.purchased).reduce((s,x)=>s+Number(x.price||0),0);
+
   $('#activeListTitle').textContent=list.name;
-  $('#listSummary').textContent=`${list.items.length} item${list.items.length===1?'':'s'} • ${bought} purchased`;
+  $('#listSummary').textContent=`${remaining} to buy • ${bought} purchased`;
   $('#listEstimatedTotal').textContent=money(total);
-  $('#listItems').innerHTML=items.length?items.map(listItemHtml).join(''):'<div class="empty">No items here yet.</div>';
-  $$('[data-toggle-list-item]').forEach(el=>el.onchange=()=>{const x=list.items.find(i=>i.id===el.dataset.toggleListItem);if(x){x.purchased=el.checked;saveState();}});
-  $$('[data-edit-list-item]').forEach(el=>el.onclick=()=>{const x=list.items.find(i=>i.id===el.dataset.editListItem);if(x)listItemModal(x);});
+
+  if(sort==='category' && items.length){
+    const grouped={};
+    items.forEach(x=>{
+      const cat=x.category||'Other';
+      if(!grouped[cat]) grouped[cat]=[];
+      grouped[cat].push(x);
+    });
+    const order=['Produce','Meat','Dairy','Bakery','Frozen','Pantry','Household','Personal Care','Other'];
+    $('#listItems').innerHTML=order
+      .filter(cat=>grouped[cat]?.length)
+      .map(cat=>`
+        <div style="margin:10px 0 4px;font-size:.78rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">${escapeHtml(cat)}</div>
+        ${grouped[cat].map(listItemHtml).join('')}
+      `).join('');
+  } else {
+    $('#listItems').innerHTML=items.length?items.map(listItemHtml).join(''):'<div class="empty">No items here yet.</div>';
+  }
+
+  $$('[data-toggle-list-item]').forEach(el=>el.onchange=()=>{
+    const x=list.items.find(i=>i.id===el.dataset.toggleListItem);
+    if(x){x.purchased=el.checked;saveState();}
+  });
+
+  $$('[data-edit-list-item]').forEach(el=>el.onclick=()=>{
+    const x=list.items.find(i=>i.id===el.dataset.editListItem);
+    if(x)listItemModal(x);
+  });
 }
 
 function renderAll(){
@@ -783,7 +832,7 @@ $('#editListBtn').onclick=renameListModal;
 $('#deleteListBtn').onclick=()=>{ensureLists();const list=getActiveList();if(state.lists.length===1){toast('Keep at least one list');return;}if(confirm(`Delete "${list.name}" and all its items?`)){state.lists=state.lists.filter(l=>l.id!==list.id);saveState();toast('List deleted');}};
 $('#clearPurchasedBtn').onclick=()=>{const list=getActiveList();const n=list.items.filter(x=>x.purchased).length;if(!n){toast('No purchased items to clear');return;}if(confirm(`Clear ${n} purchased item${n===1?'':'s'}?`)){list.items=list.items.filter(x=>!x.purchased);saveState();toast('Purchased items cleared');}};
 $('#listSelector').onchange=renderLists;
-$('#listCategoryFilter').onchange=renderLists;
+$('#listSort').onchange=renderLists;
 $('#listStatusFilter').onchange=renderLists;
 
 
@@ -811,7 +860,7 @@ $('#importInput').onchange=async e=>{
 $('#clearBtn').onclick=()=>{if(confirm('Clear all app data on this device?')){state=structuredClone(defaultState);saveState();toast('All data cleared');}};
 
 renderAll();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=3.6-lists');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=3.7-shopping-sort');
 if(Notification.permission==='granted') rescheduleNearTermReminders();
 </script>
 </body>
