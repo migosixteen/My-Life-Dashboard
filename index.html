@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>My Life Dashboard v4.3</title>
+  <title>My Life Dashboard v4.6</title>
   <style>
 :root{
   --bg:#f2f2f7; --card:#ffffff; --text:#090909; --muted:#74747a; --line:#e5e5ea;
@@ -165,20 +165,45 @@ textarea{min-height:110px;resize:vertical}
 .day-mode-all-day:empty{display:none}
 .day-mode-label{font-size:.68rem;font-weight:850;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
 .day-mode-all-day-item{display:flex;align-items:center;gap:8px;padding:8px 10px;margin:5px 0;border-radius:8px;background:var(--bg);border-left:4px solid var(--event-color);cursor:pointer}
-.day-mode-timeline{display:grid;grid-template-columns:56px minmax(0,1fr);position:relative}
-.day-mode-hour{min-height:58px;border-bottom:1px solid var(--line);font-size:.68rem;color:var(--muted);padding:5px 7px 0 0;text-align:right}
-.day-mode-slot{min-height:58px;border-bottom:1px solid var(--line);border-left:1px solid var(--line);position:relative;padding:3px 4px}
-.day-mode-event{border-left:4px solid var(--event-color);background:var(--bg);border-radius:8px;padding:7px 8px;margin:2px 0;cursor:pointer}
-.day-mode-event-title{font-size:.82rem;font-weight:800;line-height:1.2}
-.day-mode-event-time{font-size:.69rem;color:var(--muted);margin-top:2px}
-.day-mode-task{display:flex;gap:7px;align-items:flex-start;background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:7px 8px;margin:2px 0}
+.day-mode-timeline{position:relative;min-height:1392px}
+.day-mode-grid{display:grid;grid-template-columns:56px minmax(0,1fr);position:absolute;inset:0}
+.day-mode-hour{height:58px;border-bottom:1px solid var(--line);font-size:.68rem;color:var(--muted);padding:5px 7px 0 0;text-align:right}
+.day-mode-slot{height:58px;border-bottom:1px solid var(--line);border-left:1px solid var(--line);position:relative}
+.day-mode-events-layer{position:absolute;left:56px;right:4px;top:0;height:1392px;pointer-events:none}
+.day-mode-event{position:absolute;left:6px;right:6px;border-left:5px solid var(--event-color);background:color-mix(in srgb,var(--event-color) 20%,var(--card));border-radius:9px;padding:6px 8px;cursor:pointer;pointer-events:auto;overflow:hidden;box-shadow:0 0 0 1px color-mix(in srgb,var(--event-color) 45%,var(--line));z-index:3}
+.day-mode-event.busy-block{background:color-mix(in srgb,var(--event-color) 20%,var(--card))}
+.day-mode-event-title{font-size:.82rem;font-weight:850;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-mode-event-time{font-size:.68rem;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-mode-busy-band{position:absolute;left:0;right:0;background:var(--busy-bg);border-left:3px solid var(--event-color);opacity:.16;pointer-events:none;z-index:1}
+.day-mode-free-label{position:absolute;right:8px;font-size:.6rem;color:var(--muted);background:var(--card);padding:2px 5px;border-radius:999px;z-index:2}
+.day-mode-task-list{padding:10px 0;border-bottom:1px solid var(--line)}
+.day-mode-task{display:flex;gap:7px;align-items:flex-start;background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:7px 8px;margin:5px 0}
 .day-mode-task-title{font-size:.8rem;font-weight:750}
 .day-mode-task-meta{font-size:.67rem;color:var(--muted);margin-top:2px}
+.day-mode-now-line{position:absolute;left:50px;right:0;height:2px;background:var(--accent);z-index:5;pointer-events:none}
+.day-mode-now-line::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.day-mode-now-label{position:absolute;left:0;transform:translateY(-50%);font-size:.6rem;font-weight:800;color:var(--accent);background:var(--card);padding-right:3px;z-index:6}
 @media(max-width:640px){
-  .day-mode-timeline{grid-template-columns:48px minmax(0,1fr)}
-  .day-mode-hour,.day-mode-slot{min-height:54px}
+  .day-mode-grid{grid-template-columns:48px minmax(0,1fr)}
+  .day-mode-events-layer{left:48px}
+}
+@media(max-width:640px){
   .calendar-view-btn{padding:6px 10px}
 }
+
+
+@supports not (background:color-mix(in srgb, red 20%, black)){
+  .day-mode-event,.day-mode-event.busy-block{background:var(--card);box-shadow:inset 0 0 0 999px rgb(255 255 255 / .04),0 0 0 1px var(--line)}
+}
+
+
+.category-add-row{display:flex;gap:8px;align-items:center}
+.category-add-row input[type="color"],.category-color-input{width:42px;height:38px;min-width:42px;padding:2px;border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}
+.category-manager{display:flex;flex-direction:column;gap:8px}
+.category-manager-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.category-manager-name{flex:1;min-width:0;font-size:.88rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.category-color-dot{width:12px;height:12px;border-radius:50%;flex:0 0 12px}
+.category-delete-btn{border:0;background:transparent;color:var(--muted);font-size:1.15rem;cursor:pointer;padding:3px 6px}
 
 </style>
 </head>
@@ -357,8 +382,13 @@ textarea{min-height:110px;resize:vertical}
       </div>
       <div class="card">
         <h2>Categories</h2>
-        <div class="row"><input id="newCategory" placeholder="New category" style="flex:1"><button class="btn small" id="addCategoryBtn">Add</button></div>
-        <div id="categoryList" style="margin-top:10px"></div>
+        <div class="muted" style="margin-bottom:10px">Choose a color when creating a category. You can change it anytime.</div>
+        <div class="category-add-row">
+          <input id="newCategory" placeholder="New category" style="flex:1">
+          <input type="color" id="newCategoryColor" value="#3478f6" aria-label="New category color">
+          <button class="btn small" id="addCategoryBtn">Add</button>
+        </div>
+        <div id="categoryList" class="category-manager" style="margin-top:12px"></div>
       </div>
       <div class="card">
         <h2>Backup & Data</h2>
@@ -369,7 +399,7 @@ textarea{min-height:110px;resize:vertical}
         </div>
       </div>
       <div class="card">
-        <h2>About v3</h2>
+        <h2>About v4.6</h2>
         <div class="muted">Task and event editing, reminders, recurring tasks, categories, notifications, journal editing, export/import, dark mode, and offline PWA support.</div>
       </div>
     </div>
@@ -398,6 +428,7 @@ const STORAGE_KEY='life-dashboard-v3';
 const defaultState={
   tasks:[], events:[], journals:[], expenses:[], debts:[], lists:[{id:'walmart',name:'Walmart',items:[]},{id:'costco',name:'Costco',items:[]},{id:'food-basics',name:'Food Basics',items:[]},{id:'no-frills',name:'No Frills',items:[]},{id:'freshco',name:'FreshCo',items:[]},{id:'dollarama',name:'Dollarama',items:[]}],
   categories:['Work','Personal','Health','Finance'],
+  categoryColors:{Work:'#3478f6',Personal:'#e11d2e',Health:'#34a853',Finance:'#f59e0b'},
   settings:{dark:false}
 };
 let state=loadState();
@@ -414,7 +445,9 @@ function loadState(){
     const raw=localStorage.getItem(STORAGE_KEY);
     if(!raw) return structuredClone(defaultState);
     const s=JSON.parse(raw);
-    return {...structuredClone(defaultState),...s,settings:{...defaultState.settings,...(s.settings||{})}};
+    return {...structuredClone(defaultState),...s,
+      categoryColors:{...defaultState.categoryColors,...(s.categoryColors||{})},
+      settings:{...defaultState.settings,...(s.settings||{})}};
   }catch(e){ return structuredClone(defaultState); }
 }
 function saveState(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); renderAll(); }
@@ -627,6 +660,7 @@ const calendarColorPalette=['#3478f6','#e11d2e','#34a853','#f59e0b','#8b5cf6','#
 
 function categoryColor(category){
   if(!category) return '#74747a';
+  if(state.categoryColors && state.categoryColors[category]) return state.categoryColors[category];
   if(calendarColorMap[category]) return calendarColorMap[category];
   let hash=0;
   for(let i=0;i<category.length;i++) hash=((hash<<5)-hash)+category.charCodeAt(i);
@@ -717,6 +751,54 @@ function addDaysISO(iso,days){
   d.setDate(d.getDate()+days);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+
+function timeToMinutes(t){
+  if(!t) return null;
+  const p=t.split(':').map(Number);
+  if(p.length<2 || Number.isNaN(p[0]) || Number.isNaN(p[1])) return null;
+  return Math.max(0,Math.min(1439,p[0]*60+p[1]));
+}
+function minutesToLabel(mins){
+  mins=Math.max(0,Math.min(1440,mins));
+  const h=Math.floor(mins/60)%24, m=mins%60;
+  if(mins===1440) return '12:00 AM';
+  return new Date(2000,0,1,h,m).toLocaleTimeString(undefined,{hour:'numeric',minute:m?'2-digit':undefined});
+}
+function eventSegmentForDay(e,iso){
+  if(!eventOccursOnDate(e,iso) || !e.time) return null;
+  const startDate=e.date;
+  const endDate=eventEndDate(e);
+  let start=iso===startDate ? timeToMinutes(e.time) : 0;
+  let end;
+
+  if(iso===endDate){
+    end=timeToMinutes(e.endTime);
+    if(end===null){
+      if(startDate===endDate && start!==null) end=Math.min(1440,start+60);
+      else end=1440;
+    }
+  }else{
+    end=1440;
+  }
+
+  if(start===null) start=0;
+  if(end<=start){
+    if(startDate===endDate) end=Math.min(1440,start+60);
+    else end=1440;
+  }
+  return {start,end};
+}
+function mergedBusyRanges(events,iso){
+  const ranges=events.map(e=>eventSegmentForDay(e,iso)).filter(Boolean).sort((a,b)=>a.start-b.start);
+  const merged=[];
+  ranges.forEach(r=>{
+    const last=merged[merged.length-1];
+    if(last && r.start<=last.end) last.end=Math.max(last.end,r.end);
+    else merged.push({start:r.start,end:r.end});
+  });
+  return merged;
+}
+
 function renderFullDayMode(){
   const iso=selectedCalendarDate||todayISO();
   const d=new Date(iso+'T12:00:00');
@@ -737,34 +819,51 @@ function renderFullDayMode(){
   const timedTasks=tasks.filter(t=>t.time);
   const untimedTasks=tasks.filter(t=>!t.time);
 
-  let rows='';
-  for(let hour=0;hour<24;hour++){
-    const h=String(hour).padStart(2,'0');
-    const label=new Date(2000,0,1,hour,0).toLocaleTimeString(undefined,{hour:'numeric'});
-    const evs=timedEvents.filter(e=>parseInt(e.time.split(':')[0],10)===hour);
-    const tks=timedTasks.filter(t=>parseInt(t.time.split(':')[0],10)===hour);
-    rows+=`<div class="day-mode-hour">${escapeHtml(label)}</div><div class="day-mode-slot">`;
-    rows+=evs.map(e=>`<div class="day-mode-event" data-day-mode-event="${e.id}" style="--event-color:${categoryColor(e.category)}">
-      <div class="day-mode-event-title">${escapeHtml(e.title)}</div>
-      <div class="day-mode-event-time">${escapeHtml(eventDateTimeLabel(e))}${e.category?` • ${escapeHtml(e.category)}`:''}</div>
-    </div>`).join('');
-    rows+=tks.map(t=>`<div class="day-mode-task">
-      <input type="checkbox" data-day-mode-task="${t.id}" ${t.done?'checked':''} aria-label="Mark ${escapeAttr(t.title)} complete">
-      <div><div class="day-mode-task-title" style="${t.done?'text-decoration:line-through;opacity:.55':''}">${escapeHtml(t.title)}</div>
-      <div class="day-mode-task-meta">${escapeHtml(t.time||'')}${t.category?` • ${escapeHtml(t.category)}`:''}</div></div>
-    </div>`).join('');
-    rows+='</div>';
-  }
-
-  if(untimedTasks.length){
-    rows=`<div class="day-mode-hour">Tasks</div><div class="day-mode-slot">`+
-      untimedTasks.map(t=>`<div class="day-mode-task">
+  if(tasks.length){
+    const taskHtml=`<div class="day-mode-task-list"><div class="day-mode-label">Tasks</div>`+
+      tasks.map(t=>`<div class="day-mode-task">
         <input type="checkbox" data-day-mode-task="${t.id}" ${t.done?'checked':''} aria-label="Mark ${escapeAttr(t.title)} complete">
         <div><div class="day-mode-task-title" style="${t.done?'text-decoration:line-through;opacity:.55':''}">${escapeHtml(t.title)}</div>
-        <div class="day-mode-task-meta">${t.category?escapeHtml(t.category):'Any time'}</div></div>
-      </div>`).join('')+`</div>`+rows;
+        <div class="day-mode-task-meta">${t.time?escapeHtml(t.time):'Any time'}${t.category?` • ${escapeHtml(t.category)}`:''}</div></div>
+      </div>`).join('')+`</div>`;
+    $('#dayModeAllDay').innerHTML+=taskHtml;
   }
-  $('#dayModeTimeline').innerHTML=rows;
+
+  let grid='';
+  for(let hour=0;hour<24;hour++){
+    const label=new Date(2000,0,1,hour,0).toLocaleTimeString(undefined,{hour:'numeric'});
+    grid+=`<div class="day-mode-hour">${escapeHtml(label)}</div><div class="day-mode-slot"></div>`;
+  }
+
+  const pxPerMinute=58/60;
+  const busyBands=timedEvents.map(e=>{
+    const seg=eventSegmentForDay(e,iso); if(!seg) return '';
+    const color=categoryColor(e.category);
+    return `<div class="day-mode-busy-band" style="top:${(seg.start*pxPerMinute).toFixed(2)}px;height:${Math.max(2,(seg.end-seg.start)*pxPerMinute).toFixed(2)}px;--event-color:${color};--busy-bg:${color}"></div>`;
+  }).join('');
+
+  const eventBlocks=timedEvents.map(e=>{
+    const seg=eventSegmentForDay(e,iso); if(!seg) return '';
+    const top=seg.start*pxPerMinute;
+    const visualHeight=Math.max(28,(seg.end-seg.start)*pxPerMinute);
+    const color=categoryColor(e.category);
+    const displayStart=iso===e.date ? (e.time||minutesToLabel(seg.start)) : '12:00 AM';
+    const displayEnd=iso===eventEndDate(e) ? (e.endTime||minutesToLabel(seg.end)) : '12:00 AM';
+    return `<div class="day-mode-event busy-block" data-day-mode-event="${e.id}" style="top:${top.toFixed(2)}px;height:${visualHeight.toFixed(2)}px;--event-color:${color}">
+      <div class="day-mode-event-title">${escapeHtml(e.title)}</div>
+      <div class="day-mode-event-time">${escapeHtml(displayStart)} – ${escapeHtml(displayEnd)}${e.category?` • ${escapeHtml(e.category)}`:''}</div>
+    </div>`;
+  }).join('');
+
+  let nowLine='';
+  if(iso===todayISO()){
+    const now=new Date();
+    const mins=now.getHours()*60+now.getMinutes();
+    const top=mins*pxPerMinute;
+    nowLine=`<div class="day-mode-now-label" style="top:${top.toFixed(2)}px">${escapeHtml(now.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}))}</div><div class="day-mode-now-line" style="top:${top.toFixed(2)}px"></div>`;
+  }
+
+  $('#dayModeTimeline').innerHTML=`<div class="day-mode-grid">${grid}</div><div class="day-mode-events-layer">${busyBands}${eventBlocks}</div>${nowLine}`;
 
   $$('[data-day-mode-event]').forEach(el=>el.onclick=()=>{
     const e=state.events.find(x=>x.id===el.dataset.dayModeEvent);
@@ -1223,7 +1322,15 @@ function renderAll(){
     const current=cf.value;
     cf.innerHTML='<option value="">All Categories</option>'+state.categories.map(c=>`<option ${current===c?'selected':''}>${escapeHtml(c)}</option>`).join('');
   }
-  $('#categoryList').innerHTML=state.categories.length?state.categories.map(c=>`<span class="pill">${escapeHtml(c)} <button data-del-cat="${escapeAttr(c)}" style="border:0;background:transparent;color:inherit;cursor:pointer">×</button></span>`).join(''):'<span class="muted">No categories.</span>';
+  $('#categoryList').innerHTML=state.categories.length?state.categories.map(c=>{
+    const color=categoryColor(c);
+    return `<div class="category-manager-row">
+      <span class="category-color-dot" style="background:${color}"></span>
+      <span class="category-manager-name">${escapeHtml(c)}</span>
+      <input class="category-color-input" type="color" value="${escapeAttr(color)}" data-cat-color="${escapeAttr(c)}" aria-label="Color for ${escapeAttr(c)}">
+      <button class="category-delete-btn" data-del-cat="${escapeAttr(c)}" aria-label="Delete ${escapeAttr(c)}">×</button>
+    </div>`;
+  }).join(''):'<span class="muted">No categories.</span>';
 
   bindDynamic();
   renderFinance();
@@ -1239,7 +1346,23 @@ function bindDynamic(){
   $$('[data-edit-task]').forEach(x=>x.onclick=()=>taskModal(state.tasks.find(t=>t.id===x.dataset.editTask)));
   $$('[data-edit-event]').forEach(x=>x.onclick=()=>eventModal(state.events.find(e=>e.id===x.dataset.editEvent)));
   $$('[data-edit-journal]').forEach(x=>x.onclick=()=>journalModal(state.journals.find(j=>j.id===x.dataset.editJournal)));
-  $$('[data-del-cat]').forEach(x=>x.onclick=(ev)=>{ev.stopPropagation();const c=x.dataset.delCat;state.categories=state.categories.filter(k=>k!==c);saveState();});
+  $$('[data-cat-color]').forEach(x=>x.oninput=()=>{
+    const c=x.dataset.catColor;
+    state.categoryColors=state.categoryColors||{};
+    state.categoryColors[c]=x.value;
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    const row=x.closest('.category-manager-row');
+    const dot=row?.querySelector('.category-color-dot'); if(dot) dot.style.background=x.value;
+    renderMonthCalendar();
+    if(calendarViewMode==='day') renderFullDayMode();
+  });
+  $$('[data-del-cat]').forEach(x=>x.onclick=(ev)=>{
+    ev.stopPropagation();
+    const c=x.dataset.delCat;
+    state.categories=state.categories.filter(k=>k!==c);
+    if(state.categoryColors) delete state.categoryColors[c];
+    saveState();
+  });
 }
 
 async function requestNotifications(){
@@ -1303,8 +1426,14 @@ $('#dayModeNextBtn').onclick=()=>{selectedCalendarDate=addDaysISO(selectedCalend
 
 $('#addCategoryBtn').onclick=()=>{
   const v=$('#newCategory').value.trim(); if(!v)return;
+  const chosen=$('#newCategoryColor').value||'#3478f6';
+  state.categoryColors=state.categoryColors||{};
   if(!state.categories.includes(v)) state.categories.push(v);
-  $('#newCategory').value=''; saveState();
+  state.categoryColors[v]=chosen;
+  $('#newCategory').value='';
+  $('#newCategoryColor').value='#3478f6';
+  saveState();
+  toast('Category added');
 };
 $('#exportBtn').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
@@ -1312,13 +1441,15 @@ $('#exportBtn').onclick=()=>{
 };
 $('#importInput').onchange=async e=>{
   const f=e.target.files[0]; if(!f)return;
-  try{const data=JSON.parse(await f.text());state={...structuredClone(defaultState),...data,settings:{...defaultState.settings,...(data.settings||{})}};saveState();toast('Backup imported');}
+  try{const data=JSON.parse(await f.text());state={...structuredClone(defaultState),...data,
+    categoryColors:{...defaultState.categoryColors,...(data.categoryColors||{})},
+    settings:{...defaultState.settings,...(data.settings||{})}};saveState();toast('Backup imported');}
   catch{toast('Invalid backup file');}
 };
 $('#clearBtn').onclick=()=>{if(confirm('Clear all app data on this device?')){state=structuredClone(defaultState);saveState();toast('All data cleared');}};
 
 renderAll();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=4.3-calendar-day-mode');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=4.6-category-color-picker');
 if(Notification.permission==='granted') rescheduleNearTermReminders();
 </script>
 </body>

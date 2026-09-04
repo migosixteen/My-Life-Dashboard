@@ -207,3 +207,56 @@ The full calendar now has two views: Month and Day.
 - Tasks can be completed directly from Day mode.
 - Overnight and multi-day events from v4.2 remain supported.
 - Existing data remains compatible via the same `life-dashboard-v3` local-storage key.
+
+
+## v4.4 Day Mode Busy-Time Highlighting
+
+Day mode now visually shows exactly when the calendar is occupied.
+
+- Each timed event is drawn as a vertical calendar block from its Start Time to End Time.
+- The height of the event block reflects the actual duration.
+- Open/free time remains visibly blank between event blocks.
+- Busy ranges receive a subtle background highlight for easier scanning.
+- Overnight and multi-day events are clipped correctly to the selected day.
+  - Example: Sep 4 5:00 PM → Sep 5 1:00 AM appears as 5:00 PM → midnight on Sep 4,
+    then midnight → 1:00 AM on Sep 5.
+- Today's Day mode includes a current-time indicator.
+- Tasks remain visible above the timeline.
+- Event category colors remain intact.
+- Existing data continues using the same `life-dashboard-v3` local-storage key.
+
+
+## v4.5 Category-Colored Busy Blocks
+
+Day mode now uses each event's category color across the full occupied time range.
+
+- The complete event block is tinted with a lighter/transparent version of its category color.
+- The stronger left edge keeps the category color immediately recognizable.
+- The underlying busy-time band also uses that event's category color.
+- Example: a Work event from 5 PM–8 PM creates a blue-tinted occupied block across that duration.
+- Personal, Health, Finance, Family, Appointment, Birthday, Travel, and custom categories use their assigned colors.
+- Open/free time remains visually neutral, making available periods easier to identify.
+- Overnight and multi-day events retain their category coloring on each day they span.
+- Existing data remains compatible via the same `life-dashboard-v3` local-storage key.
+
+
+## v4.6 Custom Category Colors
+
+Categories can now have user-selected colors.
+
+- When adding a category, choose its color with the color picker.
+- Existing categories display their current assigned color under More → Categories.
+- Change a category's color at any time using its color picker.
+- The selected color updates across:
+  - Month Calendar
+  - Day Mode event blocks and busy-time highlights
+  - Calendar legend
+  - Event agenda/category indicators
+- Default category colors remain:
+  - Work: blue
+  - Personal: red
+  - Health: green
+  - Finance: orange
+- Custom colors are stored in `categoryColors` inside the existing `life-dashboard-v3` local data.
+- JSON export/import now preserves custom category colors.
+- Existing installations remain compatible.

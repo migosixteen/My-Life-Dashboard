@@ -1,4 +1,4 @@
-const CACHE='my-life-dashboard-v4-3-calendar-day-mode';
+const CACHE='my-life-dashboard-v4-6-category-color-picker';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install',event=>{
