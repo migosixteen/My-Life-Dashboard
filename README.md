@@ -45,3 +45,25 @@ This build redesigns the dashboard with an iPhone-inspired visual system:
 
 The underlying v3 local data model remains the same (`life-dashboard-v3`), so replacing
 your existing v3 files should preserve data stored by the same website/browser.
+
+
+## v3.5 Finance Edition
+
+### Expenses
+- Add, edit, and delete expenses
+- Amount, date, category, payment method, and notes
+- Monthly and category filtering
+- Current-month spending total
+
+### Debts
+- Add, edit, and delete debts
+- Balance, APR, minimum payment, extra payment, due date
+- Debt-payoff priority
+- Total remaining debt
+- Monthly minimum and planned payment totals
+
+Bottom navigation: Today / Tasks / Calendar / Money / More.
+Journal remains available under More.
+
+The app keeps the same `life-dashboard-v3` local-storage key so existing productivity
+data should remain on the same GitHub Pages URL/browser. Export a JSON backup before upgrading.
