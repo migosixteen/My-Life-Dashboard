@@ -315,3 +315,21 @@ Work shifts now automatically appear in the main Calendar without creating dupli
 - Editing or deleting the shift in Work automatically changes what appears in Calendar because the calendar reads the same shift record rather than creating a duplicate.
 - Cancelled shifts do not appear in the Calendar.
 - Existing local data remains compatible through the same `life-dashboard-v3` storage key.
+
+
+## v5.2 iPhone PWA Update Fix
+
+This version improves updates for the installed iPhone Home Screen app.
+
+- Home Screen navigation is network-first and bypasses stale browser cache when online.
+- Static files refresh from the network before falling back to offline copies.
+- Old app caches are removed when v5.2 activates.
+- New service workers take control quickly using `skipWaiting()` and `clients.claim()`.
+- The app checks for updates on launch, when it returns to the foreground, and every five minutes while open.
+- More → About now shows **Installed build: v5.2** and a **Check Update** button.
+- The manifest uses a versioned Home Screen launch URL: `?app=v5.2`.
+- Bottom navigation now has six columns, keeping Home, Tasks, Calendar, Money, Work, and More on one row.
+- Existing app data remains compatible with the same `life-dashboard-v3` local-storage key.
+
+### Deploying v5.2
+Replace all files in the GitHub Pages repository with this package. Wait for GitHub Pages to finish deploying. Open the site in Safari and verify **About v5.2** before adding it to the Home Screen.

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>My Life Dashboard v5.1</title>
+  <title>My Life Dashboard v5.2</title>
   <style>
 :root{
   --bg:#f2f2f7; --card:#ffffff; --text:#090909; --muted:#74747a; --line:#e5e5ea;
@@ -59,8 +59,8 @@ button{touch-action:manipulation}
 .empty{padding:20px;text-align:center;color:var(--muted);font-size:.92rem}
 .fab{position:fixed;right:20px;bottom:96px;width:58px;height:58px;border-radius:50%;border:3px solid rgba(255,255,255,.8);background:var(--accent);color:#fff;font-size:30px;line-height:1;box-shadow:0 12px 32px rgba(225,29,46,.35);cursor:pointer;z-index:20}
 .bottom-nav{position:fixed;left:0;right:0;bottom:0;background:var(--nav);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border-top:.5px solid var(--line);display:flex;justify-content:center;z-index:15}
-.nav-inner{max-width:900px;width:100%;display:grid;grid-template-columns:repeat(5,1fr);padding:8px 7px calc(7px + env(safe-area-inset-bottom))}
-.nav-btn{border:0;background:transparent;color:var(--muted);padding:7px 3px;font-size:.69rem;cursor:pointer;font-weight:600}
+.nav-inner{max-width:900px;width:100%;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:8px 4px calc(7px + env(safe-area-inset-bottom))}
+.nav-btn{border:0;background:transparent;color:var(--muted);padding:7px 1px;font-size:.64rem;cursor:pointer;font-weight:650;min-width:0}
 .nav-btn::before{display:block;font-size:1.15rem;margin-bottom:2px}
 .nav-btn[data-page="homePage"]::before{content:"⌂"}
 .nav-btn[data-page="tasksPage"]::before{content:"✓"}
@@ -245,6 +245,10 @@ textarea{min-height:110px;resize:vertical}
 .day-mode-shift{border-style:solid}
 .day-mode-shift .day-mode-event-title::before{content:"Work • ";font-size:.66rem;opacity:.72}
 
+
+.app-version-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.app-version-badge{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:850;padding:5px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
+.update-status{font-size:.7rem;color:var(--muted);margin-top:6px}
 </style>
 </head>
 <body>
@@ -473,8 +477,15 @@ textarea{min-height:110px;resize:vertical}
         </div>
       </div>
       <div class="card">
-        <h2>About v5.1</h2>
-        <div class="muted">Task and event editing, reminders, recurring tasks, categories, notifications, journal editing, export/import, dark mode, and offline PWA support.</div>
+        <h2>About v5.2</h2>
+        <div class="muted">Task and event editing, reminders, recurring tasks, categories, notifications, journal editing, Work shift/pay-period tracking, Work-to-Calendar integration, export/import, dark mode, and offline PWA support.</div>
+        <div class="app-version-row">
+          <div>
+            <div class="app-version-badge">Installed build: v5.2</div>
+            <div id="updateStatus" class="update-status">Checks for updates automatically.</div>
+          </div>
+          <button class="btn small secondary" id="checkUpdateBtn">Check Update</button>
+        </div>
       </div>
     </div>
   </section>
@@ -1910,7 +1921,68 @@ $('#importInput').onchange=async e=>{
 $('#clearBtn').onclick=()=>{if(confirm('Clear all app data on this device?')){state=structuredClone(defaultState);saveState();toast('All data cleared');}};
 
 renderAll();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=5.1-calendar-linked-work');
+if('serviceWorker' in navigator){
+  let refreshing=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(refreshing) return;
+    refreshing=true;
+    location.reload();
+  });
+
+  window.addEventListener('load',async()=>{
+    const status=(msg)=>{const el=document.getElementById('updateStatus');if(el)el.textContent=msg;};
+    try{
+      const reg=await navigator.serviceWorker.register('./sw.js?v=5.2-pwa-update-fix',{updateViaCache:'none'});
+
+      const activateWaiting=()=>{
+        if(reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
+      };
+      if(reg.waiting) activateWaiting();
+
+      reg.addEventListener('updatefound',()=>{
+        const worker=reg.installing;
+        if(!worker) return;
+        status('Downloading latest version…');
+        worker.addEventListener('statechange',()=>{
+          if(worker.state==='installed'){
+            if(navigator.serviceWorker.controller){
+              status('Update ready. Refreshing…');
+              activateWaiting();
+            }else{
+              status('App is up to date.');
+            }
+          }
+        });
+      });
+
+      const checkForUpdate=async(showMessage=false)=>{
+        try{
+          if(showMessage) status('Checking for updates…');
+          await reg.update();
+          if(reg.waiting){
+            status('Update ready. Refreshing…');
+            activateWaiting();
+          }else if(showMessage){
+            status('You are running v5.2.');
+          }
+        }catch(e){
+          if(showMessage) status(navigator.onLine?'Could not check for updates.':'Offline — update check unavailable.');
+        }
+      };
+
+      const btn=document.getElementById('checkUpdateBtn');
+      if(btn) btn.onclick=()=>checkForUpdate(true);
+
+      setTimeout(()=>checkForUpdate(false),1200);
+      document.addEventListener('visibilitychange',()=>{
+        if(document.visibilityState==='visible') checkForUpdate(false);
+      });
+      setInterval(()=>checkForUpdate(false),5*60*1000);
+    }catch(e){
+      status('Offline mode available; update service could not start.');
+    }
+  });
+}
 if(Notification.permission==='granted') rescheduleNearTermReminders();
 </script>
 </body>
