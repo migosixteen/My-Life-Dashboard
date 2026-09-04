@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <title>My Life Dashboard v4.2</title>
+  <title>My Life Dashboard v4.3</title>
   <style>
 :root{
   --bg:#f2f2f7; --card:#ffffff; --text:#090909; --muted:#74747a; --line:#e5e5ea;
@@ -152,6 +152,34 @@ textarea{min-height:110px;resize:vertical}
 .day-task-check{width:22px;height:22px;flex:0 0 22px}
 .day-view-selected{outline:2px solid var(--accent);outline-offset:-2px}
 
+
+.calendar-view-toggle{display:inline-flex;gap:3px;padding:3px;background:var(--bg);border:1px solid var(--line);border-radius:999px;margin-top:7px}
+.calendar-view-btn{border:0;background:transparent;color:var(--muted);font-size:.72rem;font-weight:800;padding:6px 12px;border-radius:999px;cursor:pointer}
+.calendar-view-btn.active{background:var(--accent);color:#fff}
+.calendar-day-mode.hidden,#calendarMonthView.hidden{display:none}
+.day-mode-header{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;padding:6px 0 12px;border-bottom:1px solid var(--line);text-align:center}
+.day-mode-weekday{font-size:.76rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.day-mode-date{font-size:1.1rem;font-weight:850;margin-top:2px}
+.day-mode-nav{box-shadow:none;border:1px solid var(--line);background:var(--bg);font-size:1.5rem}
+.day-mode-all-day{padding:10px 0;border-bottom:1px solid var(--line)}
+.day-mode-all-day:empty{display:none}
+.day-mode-label{font-size:.68rem;font-weight:850;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
+.day-mode-all-day-item{display:flex;align-items:center;gap:8px;padding:8px 10px;margin:5px 0;border-radius:8px;background:var(--bg);border-left:4px solid var(--event-color);cursor:pointer}
+.day-mode-timeline{display:grid;grid-template-columns:56px minmax(0,1fr);position:relative}
+.day-mode-hour{min-height:58px;border-bottom:1px solid var(--line);font-size:.68rem;color:var(--muted);padding:5px 7px 0 0;text-align:right}
+.day-mode-slot{min-height:58px;border-bottom:1px solid var(--line);border-left:1px solid var(--line);position:relative;padding:3px 4px}
+.day-mode-event{border-left:4px solid var(--event-color);background:var(--bg);border-radius:8px;padding:7px 8px;margin:2px 0;cursor:pointer}
+.day-mode-event-title{font-size:.82rem;font-weight:800;line-height:1.2}
+.day-mode-event-time{font-size:.69rem;color:var(--muted);margin-top:2px}
+.day-mode-task{display:flex;gap:7px;align-items:flex-start;background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:7px 8px;margin:2px 0}
+.day-mode-task-title{font-size:.8rem;font-weight:750}
+.day-mode-task-meta{font-size:.67rem;color:var(--muted);margin-top:2px}
+@media(max-width:640px){
+  .day-mode-timeline{grid-template-columns:48px minmax(0,1fr)}
+  .day-mode-hour,.day-mode-slot{min-height:54px}
+  .calendar-view-btn{padding:6px 10px}
+}
+
 </style>
 </head>
 <body>
@@ -198,6 +226,10 @@ textarea{min-height:110px;resize:vertical}
         <button class="icon-btn calendar-nav-btn" id="calendarPrevBtn" aria-label="Previous month">‹</button>
         <div class="calendar-heading">
           <div class="calendar-month-title" id="calendarMonthTitle"></div>
+          <div class="calendar-view-toggle" role="group" aria-label="Calendar view">
+            <button type="button" class="calendar-view-btn active" id="calendarMonthViewBtn">Month</button>
+            <button type="button" class="calendar-view-btn" id="calendarDayViewBtn">Day</button>
+          </div>
           <button class="calendar-today-btn" id="calendarTodayBtn">Today</button>
         </div>
         <button class="icon-btn calendar-nav-btn" id="calendarNextBtn" aria-label="Next month">›</button>
@@ -205,10 +237,25 @@ textarea{min-height:110px;resize:vertical}
 
       <div id="calendarCategoryLegend" class="calendar-legend"></div>
 
-      <div class="calendar-weekdays" aria-hidden="true">
-        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      <div id="calendarMonthView">
+        <div class="calendar-weekdays" aria-hidden="true">
+          <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+        </div>
+        <div class="month-grid" id="monthGrid"></div>
       </div>
-      <div class="month-grid" id="monthGrid"></div>
+
+      <div id="calendarDayMode" class="calendar-day-mode hidden">
+        <div class="day-mode-header">
+          <button type="button" class="icon-btn day-mode-nav" id="dayModePrevBtn" aria-label="Previous day">‹</button>
+          <div>
+            <div class="day-mode-weekday" id="dayModeWeekday"></div>
+            <div class="day-mode-date" id="dayModeDate"></div>
+          </div>
+          <button type="button" class="icon-btn day-mode-nav" id="dayModeNextBtn" aria-label="Next day">›</button>
+        </div>
+        <div class="day-mode-all-day" id="dayModeAllDay"></div>
+        <div class="day-mode-timeline" id="dayModeTimeline"></div>
+      </div>
     </div>
 
     <div class="section-title"><h2 id="dayViewHeading">Day View</h2></div>
@@ -562,6 +609,7 @@ function taskHtml(t){
 }
 
 let selectedCalendarDate=todayISO();
+let calendarViewMode='month';
 let calendarCursor=new Date();
 calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth(),1);
 
@@ -663,10 +711,88 @@ function renderDayView(){
   });
 }
 
+
+function addDaysISO(iso,days){
+  const d=new Date(iso+'T12:00:00');
+  d.setDate(d.getDate()+days);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function renderFullDayMode(){
+  const iso=selectedCalendarDate||todayISO();
+  const d=new Date(iso+'T12:00:00');
+  $('#dayModeWeekday').textContent=d.toLocaleDateString(undefined,{weekday:'long'});
+  $('#dayModeDate').textContent=d.toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});
+
+  const events=state.events.filter(e=>eventOccursOnDate(e,iso))
+    .sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
+  const tasks=state.tasks.filter(t=>t.due===iso)
+    .sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));
+
+  const allDay=events.filter(e=>!e.time);
+  $('#dayModeAllDay').innerHTML=allDay.length
+    ? `<div class="day-mode-label">All day</div>`+allDay.map(e=>`<div class="day-mode-all-day-item" data-day-mode-event="${e.id}" style="--event-color:${categoryColor(e.category)}"><span class="event-category-dot" style="background:${categoryColor(e.category)}"></span><strong>${escapeHtml(e.title)}</strong>${e.category?`<span class="pill">${escapeHtml(e.category)}</span>`:''}</div>`).join('')
+    : '';
+
+  const timedEvents=events.filter(e=>e.time);
+  const timedTasks=tasks.filter(t=>t.time);
+  const untimedTasks=tasks.filter(t=>!t.time);
+
+  let rows='';
+  for(let hour=0;hour<24;hour++){
+    const h=String(hour).padStart(2,'0');
+    const label=new Date(2000,0,1,hour,0).toLocaleTimeString(undefined,{hour:'numeric'});
+    const evs=timedEvents.filter(e=>parseInt(e.time.split(':')[0],10)===hour);
+    const tks=timedTasks.filter(t=>parseInt(t.time.split(':')[0],10)===hour);
+    rows+=`<div class="day-mode-hour">${escapeHtml(label)}</div><div class="day-mode-slot">`;
+    rows+=evs.map(e=>`<div class="day-mode-event" data-day-mode-event="${e.id}" style="--event-color:${categoryColor(e.category)}">
+      <div class="day-mode-event-title">${escapeHtml(e.title)}</div>
+      <div class="day-mode-event-time">${escapeHtml(eventDateTimeLabel(e))}${e.category?` • ${escapeHtml(e.category)}`:''}</div>
+    </div>`).join('');
+    rows+=tks.map(t=>`<div class="day-mode-task">
+      <input type="checkbox" data-day-mode-task="${t.id}" ${t.done?'checked':''} aria-label="Mark ${escapeAttr(t.title)} complete">
+      <div><div class="day-mode-task-title" style="${t.done?'text-decoration:line-through;opacity:.55':''}">${escapeHtml(t.title)}</div>
+      <div class="day-mode-task-meta">${escapeHtml(t.time||'')}${t.category?` • ${escapeHtml(t.category)}`:''}</div></div>
+    </div>`).join('');
+    rows+='</div>';
+  }
+
+  if(untimedTasks.length){
+    rows=`<div class="day-mode-hour">Tasks</div><div class="day-mode-slot">`+
+      untimedTasks.map(t=>`<div class="day-mode-task">
+        <input type="checkbox" data-day-mode-task="${t.id}" ${t.done?'checked':''} aria-label="Mark ${escapeAttr(t.title)} complete">
+        <div><div class="day-mode-task-title" style="${t.done?'text-decoration:line-through;opacity:.55':''}">${escapeHtml(t.title)}</div>
+        <div class="day-mode-task-meta">${t.category?escapeHtml(t.category):'Any time'}</div></div>
+      </div>`).join('')+`</div>`+rows;
+  }
+  $('#dayModeTimeline').innerHTML=rows;
+
+  $$('[data-day-mode-event]').forEach(el=>el.onclick=()=>{
+    const e=state.events.find(x=>x.id===el.dataset.dayModeEvent);
+    if(e) eventModal(e);
+  });
+  $$('[data-day-mode-task]').forEach(el=>el.onchange=()=>{
+    const t=state.tasks.find(x=>x.id===el.dataset.dayModeTask);
+    if(!t) return;
+    const wasDone=!!t.done;
+    t.done=el.checked;
+    if(!wasDone && t.done && t.recurrence && t.recurrence!=='none') createNextRecurringTask(t);
+    saveState();
+  });
+}
+function setCalendarView(mode){
+  calendarViewMode=mode;
+  const isDay=mode==='day';
+  $('#calendarMonthView').classList.toggle('hidden',isDay);
+  $('#calendarDayMode').classList.toggle('hidden',!isDay);
+  $('#calendarMonthViewBtn').classList.toggle('active',!isDay);
+  $('#calendarDayViewBtn').classList.toggle('active',isDay);
+  if(isDay) renderFullDayMode(); else renderMonthCalendar();
+}
+
 function renderMonthCalendar(){
   const grid=$('#monthGrid'); if(!grid) return;
   const y=calendarCursor.getFullYear(), m=calendarCursor.getMonth();
-  $('#calendarMonthTitle').textContent=calendarCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  $('#calendarMonthTitle').textContent=calendarViewMode==='day' ? new Date((selectedCalendarDate||todayISO())+'T12:00:00').toLocaleDateString(undefined,{month:'long',year:'numeric'}) : calendarCursor.toLocaleDateString(undefined,{month:'long',year:'numeric'});
 
   const first=new Date(y,m,1);
   const startOffset=first.getDay();
@@ -708,13 +834,8 @@ function renderMonthCalendar(){
 
   $$('[data-calendar-date]').forEach(cell=>cell.onclick=(ev)=>{
     if(ev.target.closest('[data-calendar-event]')) return;
-    const tapped=cell.dataset.calendarDate;
-    if(selectedCalendarDate===tapped){
-      eventModal({date:tapped});
-      return;
-    }
-    selectedCalendarDate=tapped;
-    renderMonthCalendar();
+    selectedCalendarDate=cell.dataset.calendarDate;
+    setCalendarView('day');
     renderDayView();
   });
   $$('[data-calendar-event]').forEach(btn=>btn.onclick=(ev)=>{
@@ -1093,6 +1214,7 @@ function renderAll(){
   $('#taskList').innerHTML=tasks.length?tasks.map(taskHtml).join(''):'<div class="empty">No matching tasks.</div>';
 
   renderMonthCalendar();
+  setCalendarView(calendarViewMode);
 
   const journals=[...state.journals].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
   $('#journalList').innerHTML=journals.length?journals.map(journalHtml).join(''):'<div class="empty">No journal entries yet.</div>';
@@ -1172,6 +1294,12 @@ $('#calendarPrevBtn').onclick=()=>{calendarCursor=new Date(calendarCursor.getFul
 $('#calendarNextBtn').onclick=()=>{calendarCursor=new Date(calendarCursor.getFullYear(),calendarCursor.getMonth()+1,1);selectedCalendarDate=calendarDateISO(calendarCursor.getFullYear(),calendarCursor.getMonth(),1);renderAll();};
 $('#calendarTodayBtn').onclick=()=>{const n=new Date();calendarCursor=new Date(n.getFullYear(),n.getMonth(),1);selectedCalendarDate=todayISO();renderAll();};
 
+$('#calendarMonthViewBtn').onclick=()=>setCalendarView('month');
+$('#calendarDayViewBtn').onclick=()=>setCalendarView('day');
+$('#dayModePrevBtn').onclick=()=>{selectedCalendarDate=addDaysISO(selectedCalendarDate,-1);const d=new Date(selectedCalendarDate+'T12:00:00');calendarCursor=new Date(d.getFullYear(),d.getMonth(),1);renderAll();setCalendarView('day');};
+$('#dayModeNextBtn').onclick=()=>{selectedCalendarDate=addDaysISO(selectedCalendarDate,1);const d=new Date(selectedCalendarDate+'T12:00:00');calendarCursor=new Date(d.getFullYear(),d.getMonth(),1);renderAll();setCalendarView('day');};
+
+
 
 $('#addCategoryBtn').onclick=()=>{
   const v=$('#newCategory').value.trim(); if(!v)return;
@@ -1190,7 +1318,7 @@ $('#importInput').onchange=async e=>{
 $('#clearBtn').onclick=()=>{if(confirm('Clear all app data on this device?')){state=structuredClone(defaultState);saveState();toast('All data cleared');}};
 
 renderAll();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=4.2-event-date-range');
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=4.3-calendar-day-mode');
 if(Notification.permission==='granted') rescheduleNearTermReminders();
 </script>
 </body>

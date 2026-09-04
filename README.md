@@ -188,3 +188,22 @@ Calendar events now support Start Date, End Date, Start Time, and End Time.
 - Existing events without an `endDate` remain compatible and are treated as same-day events.
 - Existing reminders continue to use the event's start date and start time.
 - Existing app data continues using the same `life-dashboard-v3` local-storage key.
+
+
+## v4.3 Calendar Day Mode
+
+The full calendar now has two views: Month and Day.
+
+- Month / Day segmented view switch inside Calendar.
+- Tapping a calendar date opens that date in full Day mode.
+- Day mode has previous-day and next-day navigation.
+- Day mode displays a full 24-hour timeline.
+- Timed events appear in the corresponding hour.
+- All-day events are shown above the timeline.
+- Tasks due that day are included in the timeline.
+- Untimed tasks are shown in a dedicated Tasks section.
+- Events retain category-specific colors.
+- Events in Day mode can be tapped to edit.
+- Tasks can be completed directly from Day mode.
+- Overnight and multi-day events from v4.2 remain supported.
+- Existing data remains compatible via the same `life-dashboard-v3` local-storage key.
